@@ -2,11 +2,10 @@ import React from 'react'
 
 function GlobalButton({ Text = 'Button', onClick, type = 'button', disabled = false }) {
   return (
-    <button type={type} disabled={disabled} className="relative  flex-shrink-0 flex items-center justify-center px-4 py-1.5 md:py-2  text-sm text-white rounded-full md:px-5 group min-w-24 " onClick={onClick}>
-      <span className="absolute top-0 left-0 w-full h-full rounded-full opacity-50 filter blur-sm bg-gradient-to-br from-dmsBlue to-blue-900"></span>
-      <span className="absolute inset-0 w-full h-full transition-all duration-200 ease-out rounded-full shadow-xl bg-gradient-to-br filter group-active:opacity-0 group-hover:blur-sm from-dmsBlue to-blue-900"></span>
-      <span className="absolute inset-0 w-full h-full transition duration-200 ease-out rounded-full bg-gradient-to-br to-dmsBlue from-blue-900"></span>
-      <span className="relative text-xs md:text-sm">{Text}</span>
+    // hover: ring-2 hover: ring - offset - 2 hover: ring - blue - 800
+    <button type={type} disabled={disabled} onClick={onClick} className="w-full rounded-full shadow-md  px-5 py-2 overflow-hidden group bg-dmsBlue relative hover:bg-gradient-to-r hover:from-dmsBlue hover:to-blue-800 text-white  transition-all ease-out duration-300">
+      <span className="absolute right-0 w-8 h-32 -mt-12 transition-all duration-1000 transform translate-x-12 bg-white opacity-10 rotate-12 group-hover:-translate-x-40 ease"></span>
+      <span className="relative">{Text}</span>
     </button>
   )
 }

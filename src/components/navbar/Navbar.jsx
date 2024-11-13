@@ -4,12 +4,19 @@ import UserDropdown from './UserDropdown'
 import { MdApps } from 'react-icons/md'
 import { IoMdSettings } from 'react-icons/io'
 import Searchbar from '../common/inputFields/Searchbar'
+import { useNavigate } from 'react-router-dom'
 
 function Navbar() {
+    const navigate = useNavigate()
+
+    const onLogoClick = () => {
+        navigate('/')
+    }
+
     return (
         <div className='bg-dmsBlue min-h-20 w-full flex justify-between px-10 items-center '>
             <div>
-                <img src={logo} alt='daman logo' className='w-auto h-14' />
+                <img src={logo} alt='daman logo' className='w-auto h-14 cursor-pointer' onClick={onLogoClick} />
             </div>
 
             <div className='w-72 '>
