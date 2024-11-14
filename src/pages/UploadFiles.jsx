@@ -11,7 +11,7 @@ function UploadFiles() {
 
     return (
         <div className=''>
-            <div className='px-10 pt-2'>
+            <div className='px-5 pt-2 sm:px-10'>
                 <Breadcrumbs paths={breadcrumbPaths} />
             </div>
             <DragAndDrop />

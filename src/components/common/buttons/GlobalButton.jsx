@@ -3,9 +3,9 @@ import React from 'react'
 function GlobalButton({ Text = 'Button', onClick, type = 'button', disabled = false }) {
   return (
     // hover: ring-2 hover: ring - offset - 2 hover: ring - blue - 800
-    <button type={type} disabled={disabled} onClick={onClick} className="w-full rounded-full shadow-md  px-5 py-2 overflow-hidden group bg-dmsBlue relative hover:bg-gradient-to-r hover:from-dmsBlue hover:to-blue-800 text-white  transition-all ease-out duration-300">
+    <button type={type} disabled={disabled} onClick={onClick} className="relative w-full px-3 py-1 overflow-hidden text-white transition-all duration-300 ease-out rounded-full shadow-md sm:px-5 sm:py-2 group bg-dmsBlue hover:bg-gradient-to-r hover:from-dmsBlue hover:to-blue-800">
       <span className="absolute right-0 w-8 h-32 -mt-12 transition-all duration-1000 transform translate-x-12 bg-white opacity-10 rotate-12 group-hover:-translate-x-40 ease"></span>
-      <span className="relative">{Text}</span>
+      <span className="relative text-sm sm:text-base">{Text}</span>
     </button>
   )
 }

@@ -2,6 +2,8 @@ import { toast } from "sonner";
 import axiosInstance from "../utils/axiosInstance";
 
 export const mergeFilesApi = async (formData) => {
+  toast.warning("This feature is not available");
+  return;
   try {
     const response = await axiosInstance.post("/api", formData);
     if (response?.status === 200) {

@@ -8,6 +8,8 @@ import { useStore } from '../../store/store';
 import excelImage from '../../assets/other/excel.png'
 import unknownImage from '../../assets/other/documents.png'
 import { useNavigate } from 'react-router-dom';
+import { mergeFilesApi } from '../../api/mainAPi';
+import { toast, Toaster } from 'sonner';
 
 
 function DragAndDrop() {
@@ -149,6 +151,16 @@ function DragAndDrop() {
 
     const convertAndMergeHandler = async () => {
         console.log(files)
+
+        const formData = new FormData();
+        formData.append('file', files);
+        formData.append('name', employee?.name);
+        try {
+            const response = await mergeFilesApi(formData)
+            console.log(response)
+        } catch (error) {
+            console.log(error?.message)
+        }
     }
 
 
@@ -164,15 +176,16 @@ function DragAndDrop() {
 
 
     return (
-        <div className='relative w-full p-10'>
+        <div className='relative w-full p-5 sm:p-10'>
+            <Toaster position='top-center' richColors />
             <div className='flex justify-between'>
                 <div>
-                    <p className='text-lg font-semibold text-gray-800 lg:text-2xl'>{employee?.name}</p>
-                    <p className='text-gray-700 lg:text-lg'>{employee?.department}</p>
+                    <p className='font-semibold text-gray-800 sm:text-lg lg:text-2xl'>{employee?.name}</p>
+                    <p className='text-sm text-gray-700 lg:text-lg'>{employee?.department}</p>
                 </div>
                 {isFileExist &&
                     <div className="mt-4">
-                        <label className="px-6 py-2 text-white transition rounded-full shadow cursor-pointer bg-dmsBlue hover:bg-blue-800">
+                        <label className="px-4 py-1 text-sm text-white transition rounded-full shadow cursor-pointer sm:px-6 sm:py-2 sm:text-base bg-dmsBlue hover:bg-blue-800">
                             Add More
                             <input
                                 type="file"
@@ -194,13 +207,13 @@ function DragAndDrop() {
                         hover:bg-gray-200 transition duration-300 ease-in-out`}
                     >
                         <input {...getInputProps()} />
-                        <p className="mb-8 text-lg font-medium text-gray-700">
+                        <p className="mb-8 font-medium text-gray-700 ams:text-lg">
                             {isDragActive
                                 ? 'Drop the files here...'
                                 : "Drag and drop or choose files from your computer"}
                         </p>
 
-                        <div className="w-36">
+                        <div className=" w-28 sm:w-36">
                             <GlobalButton type="button" Text="Upload" onClick={open} />
                         </div>
                     </div>
@@ -244,7 +257,7 @@ function DragAndDrop() {
                             ))}
                         </div>
                         {/* Download ZIP Button */}
-                        <div className="flex items-center justify-center gap-10 mt-20 px-60">
+                        <div className="flex flex-col items-center justify-center px-5 mt-20 gap-7 md:gap-10 md:flex-row lg:px-40 xl:px-60">
                             <GlobalButton type="button" Text="Download renamed files into ZIP" onClick={handleDownloadZip} />
                             <GlobalButton type="button" Text="Convert and merge all documents" onClick={convertAndMergeHandler} />
                         </div>
