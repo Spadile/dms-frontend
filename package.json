@@ -17,6 +17,7 @@
     "react-router-dom": "^6.28.0",
     "react-scripts": "5.0.1",
     "sonner": "^1.7.0",
+    "sweetalert2": "^11.14.5",
     "web-vitals": "^2.1.4",
     "zustand": "^5.0.1"
   },

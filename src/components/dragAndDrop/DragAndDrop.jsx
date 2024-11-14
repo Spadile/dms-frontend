@@ -7,9 +7,11 @@ import { saveAs } from 'file-saver';
 import { useStore } from '../../store/store';
 import excelImage from '../../assets/other/excel.png'
 import unknownImage from '../../assets/other/documents.png'
+import { useNavigate } from 'react-router-dom';
 
 
 function DragAndDrop() {
+    const navigate = useNavigate()
     const [files, setFiles] = useState([]);
     const updateIsFileExist = useStore((state) => state.updateIsFileExist);
     const [selectedName, setSelectedName] = useState([]);
@@ -18,6 +20,12 @@ function DragAndDrop() {
     const [previewData, setPreviewData] = useState(null)
     const [isRight, setIsRight] = useState(null)
 
+
+    useEffect(() => {
+        if (!employee?.name) {
+            navigate('/')
+        }
+    }, [employee, navigate])
     useEffect(() => {
         if (files?.length > 0) {
             updateIsFileExist(true);
@@ -29,6 +37,8 @@ function DragAndDrop() {
     useEffect(() => {
         return () => files?.forEach((file) => URL.revokeObjectURL(file.preview));
     }, [files]);
+
+
 
     const generatePreview = (file) => {
 
@@ -141,7 +151,6 @@ function DragAndDrop() {
         console.log(files)
     }
 
-    console.log('previewData', previewData)
 
     const sideViewSetHandler = (e, file) => {
         const box = e.currentTarget;
@@ -244,7 +253,7 @@ function DragAndDrop() {
             </div>
 
             {previewData &&
-                <div className={`absolute top-0 ${isRight ? 'left-0' : 'right-0'} px-3 py-3 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md w-[30vw] h-full no-scrollbar`}>
+                <div className={` top-0 ${isRight ? 'left-0' : 'right-0'} fixed max-h-screen hidden lg:inline-block px-3 py-3 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md w-[30vw] h-full no-scrollbar`}>
                     {previewData?.type.startsWith('image/') ? (
                         <img src={previewData?.preview} alt={previewData?.name} className="object-cover w-full h-auto rounded-md" />
                     ) : previewData?.type === 'application/pdf' ? (
