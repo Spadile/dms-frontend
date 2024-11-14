@@ -266,7 +266,7 @@ function DragAndDrop() {
             </div>
 
             {previewData &&
-                <div className={` top-0 ${isRight ? 'left-0' : 'right-0'} z-50 fixed max-h-screen hidden lg:inline-block px-3 py-3 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md w-[30vw] h-full no-scrollbar`}>
+                <div className={` top-0 ${isRight ? 'left-0' : 'right-0'} z-[100] fixed max-h-screen hidden lg:inline-block px-3 py-3 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md w-[30vw] h-full no-scrollbar`}>
                     {previewData?.type.startsWith('image/') ? (
                         <img src={previewData?.preview} alt={previewData?.name} className="object-cover w-full h-auto rounded-md" />
                     ) : previewData?.type === 'application/pdf' ? (
