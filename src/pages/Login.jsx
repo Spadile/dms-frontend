@@ -8,14 +8,14 @@ function Login() {
     return (
         <div className="flex flex-row min-h-screen px-5 sm:px-10 bg-slate-400 lg:bg-white md:px-0 ">
 
-            <div className="hidden w-7/12 h-screen lg:inline-block p-4 ">
+            <div className="hidden w-6/12 h-screen p-16 lg:inline-block ">
                 <img
                     src={bgImage}
                     alt="background"
                     className="object-cover w-full h-full"
                 />
             </div>
-            <div className="container flex flex-col items-center justify-center flex-1 w-full gap-10 px-2 mx-auto lg:w-5/12 lg:py-10 ">
+            <div className="container flex flex-col items-center justify-center flex-1 w-full gap-10 px-2 mx-auto lg:w-6/12 lg:py-10 ">
 
                 <div className="flex">
                     <svg xmlns="http://www.w3.org/2000/svg" width="90" height="70" className='w-12 h-12 sm:w-16 sm:h-16 md:w-24 md:h-24' viewBox="0 0 105 85" fill="none">
@@ -38,16 +38,19 @@ function Login() {
                 </div>
 
 
-                <div className="w-full px-6 py-10 text-black  bg-white rounded shadow-md lg:shadow-none md:w-2/3">
+                <div className="flex-col items-center justify-center w-full px-6 py-10 text-black bg-white rounded shadow-md sm:flex lg:shadow-none md:w-2/3">
                     {/* <h1 className="mb-8 text-3xl text-center">Sign In</h1> */}
                     <p className='mb-10 text-sm font-semibold text-center text-slate-600'>Transform, Organize, Simplify — Effortless Data to PDF Management!</p>
-                    <a href={LOGIN_URL}  >
-                        <button className="relative rounded-xl w-full  flex items-center justify-center py-2.5 overflow-hidden group bg-gray-900  hover:bg-gradient-to-r hover:from-gray-900 hover:to-gray-950 text-white hover:ring-2 hover:ring-offset-2 hover:ring-offset-gray-950 transition-all ease-out duration-300">
-                            <TfiMicrosoftAlt className='absolute text-2xl text-white left-2' />
-                            <span className="absolute right-0 w-8 h-32 -mt-12 transition-all duration-1000 transform translate-x-12 bg-white opacity-10 rotate-12 group-hover:-translate-x-90 ease"></span>
-                            <span className="relative">Sign In With Microsoft</span>
-                        </button>
-                    </a>
+
+                    <div className='sm:w-72 '>
+                        <a href={LOGIN_URL}  >
+                            <button className="relative rounded-xl w-full  flex items-center justify-center py-2.5 overflow-hidden group bg-gray-900  hover:bg-gradient-to-r hover:from-gray-900 hover:to-gray-950 text-white hover:ring-2 hover:ring-offset-2 hover:ring-offset-gray-950 transition-all ease-out duration-300">
+                                <TfiMicrosoftAlt className='absolute text-2xl text-white left-3' />
+                                <span className="absolute right-0 w-8 h-32 -mt-12 transition-all duration-1000 transform translate-x-12 bg-white opacity-10 rotate-12 group-hover:-translate-x-90 ease"></span>
+                                <span className="relative">Sign In With Microsoft</span>
+                            </button>
+                        </a>
+                    </div>
 
                 </div>
             </div>

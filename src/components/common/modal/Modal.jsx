@@ -8,7 +8,7 @@ function Modal({ isOpen, onClose, title, children }) {
             <div className="relative w-full max-w-xl p-4">
                 <div className="relative py-2 bg-[#E0E0E0] rounded-lg shadow ">
                     <div id='modal-header' className="flex items-center justify-between p-4 border-b rounded-t border-slate-400 ">
-                        <h3 className="text-xl font-semibold text-slate-800">{title}</h3>
+                        <h3 className="font-semibold  sm:text-xl text-slate-800">{title}</h3>
                         <button
                             type="button"
                             className="inline-flex items-center justify-center w-8 h-8 text-sm bg-transparent rounded-lg text-slate-600 hover:bg-gray-200 hover:text-gray-900 ms-auto "
