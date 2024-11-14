@@ -14,18 +14,18 @@ function Navbar() {
     }
 
     return (
-        <div className='bg-dmsBlue min-h-20 w-full flex justify-between px-10 items-center '>
+        <div className='flex items-center justify-between w-full px-10 bg-dmsBlue min-h-20 '>
             <div>
-                <img src={logo} alt='daman logo' className='w-auto h-14 cursor-pointer' onClick={onLogoClick} />
+                <img src={logo} alt='daman logo' className='w-auto cursor-pointer h-14' onClick={onLogoClick} />
             </div>
 
-            <div className='w-72 '>
+            {/* <div className='w-72 '>
                 <Searchbar />
-            </div>
-            <div className='text-white flex gap-5 items-center'>
+            </div> */}
+            <div className='flex items-center gap-5 text-white'>
                 <UserDropdown />
-                <MdApps className='text-2xl' />
-                <IoMdSettings className='text-2xl' />
+                <MdApps className='text-2xl cursor-pointer hover:animate-wiggle' />
+                <IoMdSettings className='text-2xl cursor-pointer hover:animate-spin-slow ' />
             </div>
         </div>
     )

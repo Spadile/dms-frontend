@@ -5,12 +5,18 @@ import { IoMdCloseCircleOutline } from 'react-icons/io';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { useStore } from '../../store/store';
+import excelImage from '../../assets/other/excel.png'
+import unknownImage from '../../assets/other/documents.png'
+
 
 function DragAndDrop() {
     const [files, setFiles] = useState([]);
     const updateIsFileExist = useStore((state) => state.updateIsFileExist);
+    const [selectedName, setSelectedName] = useState([]);
     const employee = useStore((state) => state.employee);
     const isFileExist = useStore((state) => state.isFileExist);
+    const [previewData, setPreviewData] = useState(null)
+    const [isRight, setIsRight] = useState(null)
 
     useEffect(() => {
         if (files?.length > 0) {
@@ -24,29 +30,49 @@ function DragAndDrop() {
         return () => files?.forEach((file) => URL.revokeObjectURL(file.preview));
     }, [files]);
 
+    const generatePreview = (file) => {
+
+        if (file.type.startsWith('image/')) {
+            return URL.createObjectURL(file);
+        } else if (file.type === 'application/pdf') {
+            return URL.createObjectURL(file);
+        } else if (
+            file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || // .xlsx
+            file.type === 'application/vnd.ms-excel' || // .xls 
+            file.type === 'text/csv'
+        ) {
+            return excelImage; // Placeholder for Excel files
+        } else {
+            return unknownImage; // Generic placeholder
+        }
+    };
+
+    console.log(files)
     const onDrop = useCallback((acceptedFiles) => {
         setFiles(acceptedFiles.map((file) => Object.assign(file, {
-            preview: URL.createObjectURL(file)
+            preview: generatePreview(file)
         })));
     }, []);
+
     const { getRootProps, getInputProps, isDragActive, open } = useDropzone({ onDrop, noClick: true });
 
     const handleManualUpload = (event) => {
         const selectedFiles = Array.from(event.target.files).map((file) =>
             Object.assign(file, {
-                preview: URL.createObjectURL(file),
+                preview: generatePreview(file),
             })
         );
         setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
     };
 
-    const handleRemoveFile = (fileName) => {
+    const handleRemoveFile = (fileName, i) => {
         setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
+        setSelectedName((prev) => prev.filter((_, index) => index !== i));
     };
 
     const handleRenameFile = (fileName, newName) => {
         setFiles((prevFiles) =>
-            prevFiles.map((file) => {
+            prevFiles.map((file, i) => {
                 if (file.name === fileName) {
 
                     // Get the file extension
@@ -55,7 +81,7 @@ function DragAndDrop() {
                     // If the new name does not have an extension, add the original extension
                     const renamedFileName = newName.endsWith(`.${fileExtension}`)
                         ? newName
-                        : `${newName}${employee?.name}${employee?.department}.${fileExtension}`;
+                        : `${newName}${employee?.name}${employee?.department}${i}.${fileExtension}`;
 
                     // Create a new File object while preserving all native properties (type, lastModified)
                     const renamedFile = new File([file], renamedFileName, {
@@ -65,10 +91,15 @@ function DragAndDrop() {
 
                     // Manually preserve custom properties from the original file
 
-                    renamedFile.preview = URL.createObjectURL(renamedFile);
+                    renamedFile.preview = generatePreview(renamedFile);
                     renamedFile.path = file.path;
                     renamedFile.relativePath = file.relativePath;
-
+                    // for namve view in dropdown
+                    setSelectedName((prev) => {
+                        const newArr = [...prev];
+                        newArr[i] = newName; // Replace value at index i
+                        return newArr;
+                    });
                     return renamedFile; // Return the new File object with the new name and preserved properties
                 }
                 return file; // No changes to other files
@@ -106,17 +137,33 @@ function DragAndDrop() {
         saveAs(content, 'uploaded-files.zip');
     };
 
-    console.log(files)
+    const convertAndMergeHandler = async () => {
+        console.log(files)
+    }
+
+    console.log('previewData', previewData)
+
+    const sideViewSetHandler = (e, file) => {
+        const box = e.currentTarget;
+        const boxRect = box.getBoundingClientRect();
+        const screenWidth = window.innerWidth;
+        const isCloserToRight = boxRect.right > screenWidth / 2;
+
+        setIsRight(isCloserToRight)
+        setPreviewData({ name: file.name, type: file.type, preview: generatePreview(file) })
+    }
+
+
     return (
-        <div className='w-full p-10'>
+        <div className='relative w-full p-10'>
             <div className='flex justify-between'>
                 <div>
-                    <p className='font-semibold text-lg lg:text-2xl text-gray-800'>{employee?.name}</p>
+                    <p className='text-lg font-semibold text-gray-800 lg:text-2xl'>{employee?.name}</p>
                     <p className='text-gray-700 lg:text-lg'>{employee?.department}</p>
                 </div>
                 {isFileExist &&
                     <div className="mt-4">
-                        <label className="px-6 py-2 bg-dmsBlue text-white rounded-full shadow hover:bg-blue-800 transition cursor-pointer">
+                        <label className="px-6 py-2 text-white transition rounded-full shadow cursor-pointer bg-dmsBlue hover:bg-blue-800">
                             Add More
                             <input
                                 type="file"
@@ -138,7 +185,7 @@ function DragAndDrop() {
                         hover:bg-gray-200 transition duration-300 ease-in-out`}
                     >
                         <input {...getInputProps()} />
-                        <p className="text-gray-700 text-lg font-medium mb-8">
+                        <p className="mb-8 text-lg font-medium text-gray-700">
                             {isDragActive
                                 ? 'Drop the files here...'
                                 : "Drag and drop or choose files from your computer"}
@@ -152,31 +199,33 @@ function DragAndDrop() {
 
                 {/* Preview Section */}
                 {files?.length > 0 && (
-                    <div className="mt-2 w-full">
+                    <div className="w-full mt-2 min-h-[65vh]">
                         <div className="flex flex-wrap gap-6">
-                            {files?.map(file => (
-                                <div key={file?.name} className="">
+                            {files?.map((file, index) => (
+                                <div key={file?.name} className="max-w-44">
                                     <div className='flex justify-end mb-2'>
-                                        <IoMdCloseCircleOutline onClick={() => handleRemoveFile(file.name)} className="text-gray-500 rounded-full text-lg cursor-pointer" />
+                                        <IoMdCloseCircleOutline onClick={() => handleRemoveFile(file.name, index)} className="text-lg text-gray-500 rounded-full cursor-pointer" />
                                     </div>
-                                    <div className="border rounded-md px-3 py-3 border-gray-300 bg-gray-200 shadow-md">
-                                        {file?.type?.startsWith('image') ? (
-                                            <img
-                                                src={file?.preview}
-                                                alt={file?.name}
-                                                className="w-40 h-48 object-cover rounded-md border"
-                                            />
+                                    <div className="px-3 py-3 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md w-44 h-52 no-scrollbar"
+                                        onMouseEnter={(e) => sideViewSetHandler(e, file)}
+                                        onMouseLeave={() => setPreviewData(null)}>
+
+                                        {file.type.startsWith('image/') ? (
+                                            <img src={file?.preview} alt={file?.name} className="object-cover w-full h-full rounded-md" />
+                                        ) : file.type === 'application/pdf' ? (
+                                            <iframe src={file?.preview} className="w-40 no-scrollbar" height='100%' title={file.name}></iframe>
                                         ) : (
-                                            <p className="truncate">{file?.name}</p>
+                                            <img src={file?.preview} alt={file?.name} className="object-cover w-full h-full rounded-md" />
                                         )}
                                     </div>
+                                    <p className="px-3 py-1 text-xs truncate">{file.name}</p>
 
                                     <select
-                                        value={file.name}
+                                        value={selectedName[index]}
                                         onChange={(e) => handleRenameFile(file.name, e.target.value)}
-                                        className='mt-3 border px-2 text-sm py-1 bg-blue-50 w-full rounded-sm'
+                                        className='px-2 py-1 mt-3 text-sm border rounded-sm w-44 bg-blue-50'
                                     >
-                                        <option value="">Select Document Type</option>
+                                        <option value="Select">Select Document Type</option>
                                         <option value="CoverLetter">Cover Letter</option>
                                         <option value="Passport">Passport</option>
                                         <option value="EmiratesId">Emirates Id</option>
@@ -186,13 +235,24 @@ function DragAndDrop() {
                             ))}
                         </div>
                         {/* Download ZIP Button */}
-                        <div className="mt-10 flex items-center justify-center gap-10 px-60">
+                        <div className="flex items-center justify-center gap-10 mt-20 px-60">
                             <GlobalButton type="button" Text="Download renamed files into ZIP" onClick={handleDownloadZip} />
-                            <GlobalButton type="button" Text="Convert and merge all documents" onClick={handleDownloadZip} />
+                            <GlobalButton type="button" Text="Convert and merge all documents" onClick={convertAndMergeHandler} />
                         </div>
                     </div>
                 )}
             </div>
+
+            {previewData &&
+                <div className={`absolute top-0 ${isRight ? 'left-0' : 'right-0'} px-3 py-3 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md w-[30vw] h-full no-scrollbar`}>
+                    {previewData?.type.startsWith('image/') ? (
+                        <img src={previewData?.preview} alt={previewData?.name} className="object-cover w-full h-auto rounded-md" />
+                    ) : previewData?.type === 'application/pdf' ? (
+                        <iframe src={previewData?.preview} className="w-full no-scrollbar" height='100%' title={previewData?.name}></iframe>
+                    ) : (
+                        <img src={previewData?.preview} alt={previewData?.name} className="object-cover w-full h-auto rounded-md" />
+                    )}
+                </div>}
         </div>
     );
 }
