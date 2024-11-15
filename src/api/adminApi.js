@@ -2,8 +2,6 @@ import { toast } from "sonner";
 import axiosInstance from "../utils/axiosInstance";
 
 export const getFileTypeApi = async () => {
-  // toast.warning("Data is not available");
-  // return;
   try {
     const response = await axiosInstance.get("/get_all_document-types");
     if (response?.status === 200) {
@@ -50,8 +48,6 @@ export const updateFileTypeApi = async (formData) => {
 };
 
 export const deleteFileTypeApi = async (id) => {
-  // toast.warning("This feature is not available");
-  // return;
   try {
     const response = await axiosInstance.delete(`/document-types/${id}`);
     if (response?.status === 200) {

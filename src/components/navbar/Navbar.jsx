@@ -4,11 +4,9 @@ import UserDropdown from './UserDropdown'
 import { MdApps } from 'react-icons/md'
 import { IoMdSettings } from 'react-icons/io'
 import { useNavigate } from 'react-router-dom'
-import { useStore } from '../../store/store'
 
 function Navbar() {
     const navigate = useNavigate()
-    const user = useStore((state) => state.user)
 
     const onLogoClick = () => {
         navigate('/')

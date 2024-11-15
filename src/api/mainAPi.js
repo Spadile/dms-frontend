@@ -29,9 +29,9 @@ export const mergeFilesApi = async (formData) => {
   }
 };
 
-export const compressFilesApi = async (fileurl) => {
+export const compressFilesApi = async (data) => {
   try {
-    const response = await axiosInstance.get(`/compressed-pdf/${fileurl}`);
+    const response = await axiosInstance.post(`/pdf`, data);
     if (response?.status === 200) {
       return response;
     } else {

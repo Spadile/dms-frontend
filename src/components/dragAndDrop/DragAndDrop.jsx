@@ -12,7 +12,7 @@ import { compressFilesApi, getFileSize, mergeFilesApi } from '../../api/mainAPi'
 import { toast, Toaster } from 'sonner';
 import Swal from 'sweetalert2';
 import axiosInstance from '../../utils/axiosInstance';
-import { formatFileSize } from '../../utils/functions';
+import { formatFileSize, formatFileSizeNumber } from '../../utils/functions';
 import { getFileTypeApi } from '../../api/adminApi';
 
 
@@ -198,8 +198,8 @@ function DragAndDrop() {
                 setFileUrl(response?.data?.file_url)
                 const size = await getFileSize(response?.data?.file_url)
                 if (size) {
-                    const convertedSize = formatFileSize(size)
-                    setSizeOfFile(convertedSize)
+                    // const convertedSize = formatFileSize(size)
+                    setSizeOfFile(Number(size))
                 }
             }
         } catch (error) {
@@ -222,15 +222,18 @@ function DragAndDrop() {
                     Swal.showLoading();
                 }
             });
-            const response = await compressFilesApi(fileUrl)
+            const data = {
+                file_url: fileUrl
+            }
+            const response = await compressFilesApi(data)
             if (response?.status === 200) {
                 Swal.close()
                 toast.success("Successfully compressed")
                 setFileUrl(response?.data?.file_url)
                 const size = await getFileSize(response?.data?.file_url)
                 if (size) {
-                    const convertedSize = formatFileSize(size)
-                    setSizeOfFile(convertedSize)
+                    // const convertedSize = formatFileSize(size)
+                    setSizeOfFile(Number(size))
                 }
             }
         } catch (error) {
@@ -288,7 +291,7 @@ function DragAndDrop() {
                     <p className='font-semibold text-gray-800 sm:text-lg lg:text-2xl'>{employee?.name}</p>
                     <p className='text-sm text-gray-700 lg:text-lg'>{employee?.department}</p>
                 </div>
-                {isFileExist &&
+                {isFileExist && !fileUrl &&
                     <div className="mt-4">
                         <label className="px-4 py-1 text-sm text-white transition rounded-full shadow cursor-pointer sm:px-6 sm:py-2 sm:text-base bg-dmsBlue hover:bg-blue-800">
                             Add More
@@ -384,10 +387,10 @@ function DragAndDrop() {
 
                     <div className='text-center' >
                         <p className='text-lg font-semibold text-gray-800 sm:text-xl'>Successfully converted & merged</p>
-                        <p className='text-sm text-gray-600 sm:text-base'>{` The file size is ${sizeOfFile} size. Do you want to compress?`}</p>
+                        <p className='text-sm text-gray-600 sm:text-base'>{` The file size is ${formatFileSize(sizeOfFile)} size. Do you want to compress?`}</p>
                     </div>
                     <div className="flex flex-col items-center justify-center w-full px-5 mt-10 gap-7 md:gap-10 md:flex-row lg:px-40 xl:px-60">
-                        <GlobalButton type="button" Text="Yes, I want to compress" onClick={() => compressFileHandler(fileUrl)} />
+                        <GlobalButton type="button" disabled={formatFileSizeNumber(sizeOfFile) < 10 ? true : false} Text="Yes, I want to compress" onClick={() => compressFileHandler(fileUrl)} />
                         <GlobalButton type="button" Text="No, download this version" onClick={() => handleDownload(fileUrl)} />
                     </div>
 
