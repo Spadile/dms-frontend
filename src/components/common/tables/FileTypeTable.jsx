@@ -35,7 +35,7 @@ function FileTypeTable({ data, editHandler, deleteHandler, totalPages, loading }
                                         <div className="relative flex justify-center group">
                                             <AiOutlineDelete
                                                 className="text-lg cursor-pointer hover:text-orange-800 text-red"
-                                                onClick={() => deleteHandler(item?.email)}
+                                                onClick={() => deleteHandler(item?.id)}
                                             />
                                             <p className="absolute hidden px-3 py-[0.05rem] bg-white text-xs border border-slate-400 text-slate-600 rounded-lg -top-6 group-hover:flex">
                                                 Delete

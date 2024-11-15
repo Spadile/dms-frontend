@@ -14,7 +14,6 @@ function CreateUserForm({ onClose }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log(name, department)
         if (name && department) {
             updateEmployee({ name: name, department: department })
             navigate('/upload-files');

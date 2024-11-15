@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 import { toast } from "sonner";
 
 const axiosInstance = axios.create({
-  baseURL: process.env.API_BASE_URL,
+  baseURL: process.env.REACT_APP_API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
     "ngrok-skip-browser-warning": "true",

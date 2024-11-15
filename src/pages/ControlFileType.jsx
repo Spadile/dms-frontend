@@ -31,7 +31,8 @@ function ControlFileType() {
         setLoading(true)
         try {
             const types = await getFileTypeApi()
-            setableData(types)
+            console.log(types)
+            setableData(types?.document_types)
             setTotalPages(types?.pagination?.totalPages)
         } catch (error) {
             console.log(error.message)
