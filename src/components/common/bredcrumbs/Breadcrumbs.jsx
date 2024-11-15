@@ -3,7 +3,6 @@ import { IoMdArrowDropright } from 'react-icons/io';
 import { Link } from 'react-router-dom';
 
 function Breadcrumbs({ paths }) {
-    console.log(paths)
     return (
         <nav className="" aria-label="breadcrumb">
             <ul className="flex items-center gap-1 ">

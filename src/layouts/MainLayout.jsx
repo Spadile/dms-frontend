@@ -22,11 +22,11 @@ function MainLayout() {
             navigate("/login");
             return;
         }
-
         const user = parseJWT(token);
-        const { name, department, id } = user;
+        console.log(user)
+        const { name, department, oid, unique_name } = user;
         if (user) {
-            updateUser({ id: id, name: name, department: department });
+            updateUser({ id: oid, name: name, department: department, email: unique_name });
         }
         if (!cookieToken || (paramsToken && paramsToken !== cookieToken)) {
             setTokenWithExpiry(token, TOKEN_EXPIRY_IN_HOURS);

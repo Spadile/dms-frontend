@@ -6,7 +6,7 @@ const LOGIN_URL = process.env.REACT_APP_LOGIN_URL
 function Login() {
 
     return (
-        <div className="flex flex-row min-h-screen px-5 sm:px-10 bg-slate-400 lg:bg-white md:px-0 ">
+        <div className="flex flex-row min-h-screen px-5 sm:px-10 bg-slate-100 lg:bg-white md:px-0 ">
 
             <div className="hidden w-6/12 h-screen p-16 lg:inline-block ">
                 <img
@@ -18,7 +18,7 @@ function Login() {
             <div className="container flex flex-col items-center justify-center flex-1 w-full gap-10 px-2 mx-auto lg:w-6/12 lg:py-10 ">
 
                 <div className="flex">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="90" height="70" className='w-12 h-12 sm:w-16 sm:h-16 md:w-24 md:h-24' viewBox="0 0 105 85" fill="none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="90" height="70" className='w-16 h-16 md:w-24 md:h-24' viewBox="0 0 105 85" fill="none">
                         <path d="M101.179 81.3574V81.7654H100.071V84.7083H99.6331V81.7654H98.4956V81.3574H101.179Z" fill="#003478"></path>
                         <path d="M101.821 81.3574H102.462L103.425 84.1547L104.358 81.3574H105V84.6791H104.562V82.7269C104.562 82.6686 104.562 82.0567 104.562 81.8819L103.6 84.6791H103.162L102.2 81.8819L102.229 82.7269V84.6791H101.792V81.3574H101.821Z" fill="#003478"></path>
                         <path d="M6.24166 81.1539H3.73333V65.7692H5.57083C9.94583 65.7692 11.3167 66.1188 12.9792 67.6922C14.4667 69.0909 15.2833 71.1014 15.2833 73.3741C15.2833 76.4336 13.8542 79.056 11.55 80.1924C10.15 80.9208 8.86666 81.1539 6.24166 81.1539ZM12.1625 63.1468C10.1792 62.5057 8.51666 62.3018 4.4625 62.3018H0V84.6796H4.49166C9.77083 84.6796 10.8792 84.5339 13.0958 83.4849C14.4667 82.8439 15.7208 81.7949 16.7417 80.4837C18.2292 78.5606 19.075 76.0257 19.075 73.5489C19.075 68.8869 16.1875 64.5162 12.1625 63.1468Z" fill="#003478"></path>

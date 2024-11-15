@@ -1,10 +1,8 @@
 import React from 'react'
 import { AiOutlineDelete } from 'react-icons/ai'
-import { MdOutlineModeEdit } from 'react-icons/md'
 import LoadingTwo from '../loading/LoadingTwo'
-import PaginationReport from '../pagination/PaginationReport'
 
-function FileTypeTable({ data, editHandler, deleteHandler, totalPages, loading }) {
+function FileTypeTable({ data, deleteHandler, loading }) {
     return (
         <div className="w-full h-full ">
             <div className="border border-slate-200 bg-white px-5 pb-2.5 min-h-64 pt-6 overflow-x-auto shadow-lg rounded-xl sm:px-7.5 xl:pb-1">
@@ -23,19 +21,11 @@ function FileTypeTable({ data, editHandler, deleteHandler, totalPages, loading }
                                     <td className="p-2.5 xl:p-3 text-black whitespace-normal break-words">{index + 1}</td>
                                     <td className="p-2.5 xl:p-3 text-black whitespace-normal break-words">{item?.name}</td>
                                     <td className="p-2.5 xl:p-3 flex justify-center gap-5">
-                                        {/* <div className="relative flex justify-center group">
-                                            <MdOutlineModeEdit
-                                                className="text-lg text-blue-700 cursor-pointer hover:text-blue-800"
-                                                onClick={() => editHandler(item?.email, item?.rolls)}
-                                            />
-                                            <p className="absolute hidden px-3 py-[0.05rem] bg-white text-xs border border-slate-400 text-slate-600 rounded-lg -top-6 group-hover:flex">
-                                                Edit
-                                            </p>
-                                        </div> */}
+
                                         <div className="relative flex justify-center group">
                                             <AiOutlineDelete
                                                 className="text-lg cursor-pointer hover:text-orange-800 text-red"
-                                                onClick={() => deleteHandler(item?.email)}
+                                                onClick={() => deleteHandler(item?.id)}
                                             />
                                             <p className="absolute hidden px-3 py-[0.05rem] bg-white text-xs border border-slate-400 text-slate-600 rounded-lg -top-6 group-hover:flex">
                                                 Delete
@@ -53,9 +43,9 @@ function FileTypeTable({ data, editHandler, deleteHandler, totalPages, loading }
                     </div>
                 }
             </div>
-            <div className="flex overflow-x-auto lg:justify-center">
+            {/* <div className="flex overflow-x-auto lg:justify-center">
                 <PaginationReport totalPages={totalPages} />
-            </div>
+            </div> */}
         </div>
     )
 }

@@ -16,7 +16,6 @@ function ControlFileType() {
     const [fileType, setFileType] = useState('')
     const [typeId, setTypeId] = useState('')
     const [loading, setLoading] = useState(false)
-    const [totalPages, setTotalPages] = useState(1)
 
     useEffect(() => {
         refetchData()
@@ -31,8 +30,8 @@ function ControlFileType() {
         setLoading(true)
         try {
             const types = await getFileTypeApi()
-            setableData(types)
-            setTotalPages(types?.pagination?.totalPages)
+            console.log(types)
+            setableData(types?.document_types)
         } catch (error) {
             console.log(error.message)
         } finally {
@@ -134,7 +133,7 @@ function ControlFileType() {
     }
 
     return (
-        <div className="relative min-h-screen p-10 bg-stone-100 ">
+        <div className="relative min-h-screen px-5 py-10 sm:px-10 bg-stone-100 ">
             <Toaster position='top-center' richColors />
             <div className='absolute top-2'>
                 <Breadcrumbs paths={breadcrumbPaths} />
@@ -154,7 +153,7 @@ function ControlFileType() {
                     </div>
                 </div>
             </div>
-            <FileTypeTable data={tableData} totalPages={totalPages} loading={loading} deleteHandler={deleteHandler} />
+            <FileTypeTable data={tableData} loading={loading} deleteHandler={deleteHandler} />
         </div>
 
     );
