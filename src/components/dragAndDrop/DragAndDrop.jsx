@@ -8,11 +8,11 @@ import { useStore } from '../../store/store';
 import excelImage from '../../assets/other/excel.png'
 import unknownImage from '../../assets/other/documents.png'
 import { useNavigate } from 'react-router-dom';
-import { compressFilesApi, getFileSize, mergeFilesApi } from '../../api/mainAPi';
+import { compressFilesApi, deleteFileLinkApi, getFileSize, mergeFilesApi } from '../../api/mainAPi';
 import { toast, Toaster } from 'sonner';
 import Swal from 'sweetalert2';
 import axiosInstance from '../../utils/axiosInstance';
-import { formatFileSize, formatFileSizeNumber } from '../../utils/functions';
+import { convertToUnderscore, formatFileSize, formatFileSizeNumber } from '../../utils/functions';
 import { getFileTypeApi } from '../../api/adminApi';
 
 
@@ -37,6 +37,7 @@ function DragAndDrop() {
         }
         fetchFileTypes()
     }, [employee, navigate])
+
     useEffect(() => {
         if (files?.length > 0) {
             updateIsFileExist(true);
@@ -177,8 +178,8 @@ function DragAndDrop() {
 
         const formData = new FormData();
         // formData.append('files', files);
-        formData.append('name', employee?.name);
-        formData.append('department', employee?.department);
+        formData.append('name', convertToUnderscore(employee?.name));
+        formData.append('department', convertToUnderscore(employee?.department));
         files.forEach((file, index) => {
             formData.append('files', file);
         });
@@ -261,15 +262,27 @@ function DragAndDrop() {
         setLoading(true)
         const toastId = toast.loading("Downloading...")
         try {
-            const response = await axiosInstance.get(fileLink, { responseType: 'blob' });
-            saveAs(response.data, getFileNameFromUrl(fileLink));
+            const response = await axiosInstance.get(fileLink, {
+                responseType: 'blob',
+                onDownloadProgress: (progressEvent) => {
+                    const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    // console.log(`Progress: ${progress}%`);
+                },
+            });
+            saveAs(response?.data, getFileNameFromUrl(fileLink));
+            toast.success('Download completed!');
+            await deleteFileLinkApi({ file_url: fileLink })
         } catch (error) {
             console.error('Error downloading the file:', error);
         } finally {
             toast.dismiss(toastId)
             setLoading(false);
         }
+
     };
+
+
+
 
     const getFileNameFromUrl = (url) => {
         const urlObj = new URL(url);

@@ -15,3 +15,7 @@ export const formatFileSizeNumber = (sizeInBytes) => {
 
   return sizeInMB.toFixed(2); // 2 decimal places for clarity
 };
+
+export const convertToUnderscore = (input) => {
+  return input.trim().replace(/\s+/g, "_");
+};
