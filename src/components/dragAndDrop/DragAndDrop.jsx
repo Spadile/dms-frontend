@@ -269,9 +269,15 @@ function DragAndDrop() {
                     // console.log(`Progress: ${progress}%`);
                 },
             });
-            saveAs(response?.data, getFileNameFromUrl(fileLink));
-            toast.success('Download completed!');
-            await deleteFileLinkApi({ file_url: fileLink })
+            if (response?.status === 200) {
+                toast.dismiss(toastId)
+                saveAs(response?.data, getFileNameFromUrl(fileLink));
+                toast.success('Download completed!');
+                const deleted = await deleteFileLinkApi({ file_url: fileLink })
+                if (deleted.status === 200) {
+                    createNewClick()
+                }
+            }
         } catch (error) {
             console.error('Error downloading the file:', error);
         } finally {
