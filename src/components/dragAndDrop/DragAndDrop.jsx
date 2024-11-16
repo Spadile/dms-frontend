@@ -8,11 +8,11 @@ import { useStore } from '../../store/store';
 import excelImage from '../../assets/other/excel.png'
 import unknownImage from '../../assets/other/documents.png'
 import { useNavigate } from 'react-router-dom';
-import { compressFilesApi, getFileSize, mergeFilesApi } from '../../api/mainAPi';
+import { compressFilesApi, deleteFileLinkApi, getFileSize, mergeFilesApi } from '../../api/mainAPi';
 import { toast, Toaster } from 'sonner';
 import Swal from 'sweetalert2';
 import axiosInstance from '../../utils/axiosInstance';
-import { formatFileSize, formatFileSizeNumber } from '../../utils/functions';
+import { convertToUnderscore, formatFileSize, formatFileSizeNumber } from '../../utils/functions';
 import { getFileTypeApi } from '../../api/adminApi';
 
 
@@ -29,7 +29,7 @@ function DragAndDrop() {
     const [fileUrl, setFileUrl] = useState(null)
     const [sizeOfFile, setSizeOfFile] = useState(null)
     const [typeData, setTypeData] = useState([])
-
+    const [loading, setLoading] = useState(false)
 
     useEffect(() => {
         if (!employee?.name) {
@@ -37,6 +37,7 @@ function DragAndDrop() {
         }
         fetchFileTypes()
     }, [employee, navigate])
+
     useEffect(() => {
         if (files?.length > 0) {
             updateIsFileExist(true);
@@ -177,8 +178,8 @@ function DragAndDrop() {
 
         const formData = new FormData();
         // formData.append('files', files);
-        formData.append('name', employee?.name);
-        formData.append('department', employee?.department);
+        formData.append('name', convertToUnderscore(employee?.name));
+        formData.append('department', convertToUnderscore(employee?.department));
         files.forEach((file, index) => {
             formData.append('files', file);
         });
@@ -258,21 +259,34 @@ function DragAndDrop() {
 
 
     const handleDownload = async (fileLink) => {
-        const pdfUrl = fileLink// Replace with your PDF URL
-
+        setLoading(true)
+        const toastId = toast.loading("Downloading...")
         try {
-            const response = await axiosInstance.get(pdfUrl, { responseType: 'blob' });
-            // Creating a Blob from the PDF stream
-            const blob = response.data;
-            const link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            link.download = 'Sooraj_IT.pdf'; // Suggested filename
-            link.click();
-            // Clean up the URL object
-            window.URL.revokeObjectURL(link.href);
+            const response = await axiosInstance.get(fileLink, {
+                responseType: 'blob',
+                onDownloadProgress: (progressEvent) => {
+                    const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    // console.log(`Progress: ${progress}%`);
+                },
+            });
+            saveAs(response?.data, getFileNameFromUrl(fileLink));
+            toast.success('Download completed!');
+            await deleteFileLinkApi({ file_url: fileLink })
         } catch (error) {
             console.error('Error downloading the file:', error);
+        } finally {
+            toast.dismiss(toastId)
+            setLoading(false);
         }
+
+    };
+
+
+
+
+    const getFileNameFromUrl = (url) => {
+        const urlObj = new URL(url);
+        return urlObj.pathname.split('/').pop();
     };
 
     const createNewClick = () => {
@@ -389,8 +403,8 @@ function DragAndDrop() {
                         <p className='text-sm text-gray-600 sm:text-base'>{` The file size is ${formatFileSize(sizeOfFile)} size. Do you want to compress?`}</p>
                     </div>
                     <div className="flex flex-col items-center justify-center w-full px-5 mt-10 gap-7 md:gap-10 md:flex-row lg:px-40 xl:px-60">
-                        <GlobalButton type="button" disabled={formatFileSizeNumber(sizeOfFile) < 10 ? true : false} Text="Yes, I want to compress" onClick={() => compressFileHandler(fileUrl)} />
-                        <GlobalButton type="button" Text="No, download this version" onClick={() => handleDownload(fileUrl)} />
+                        <GlobalButton type="button" disabled={formatFileSizeNumber(sizeOfFile) < 10 || loading ? true : false} Text="Yes, I want to compress" onClick={() => compressFileHandler(fileUrl)} />
+                        <GlobalButton type="button" Text="No, download this version" onClick={() => handleDownload(fileUrl)} disabled={loading} />
                     </div>
                     {formatFileSizeNumber(sizeOfFile) < 10 && <p className='text-xs text-green-600 '>{`You can only compress the file if the size is more than 10 Mb`}</p>}
                     <button type="button" className='py-1 mt-10 text-xs border-2 rounded-full sm:text-sm px-7 border-emerald-500 text-emerald-500 hover:bg-emerald-500 hover:text-white' onClick={createNewClick} >Create New </button>
