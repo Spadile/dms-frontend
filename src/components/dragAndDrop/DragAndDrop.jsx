@@ -212,7 +212,6 @@ function DragAndDrop() {
     }
 
     const compressFileHandler = async (fileUrl) => {
-
         try {
             Swal.fire({
                 title: 'loading...',
@@ -393,7 +392,7 @@ function DragAndDrop() {
                         <GlobalButton type="button" disabled={formatFileSizeNumber(sizeOfFile) < 10 ? true : false} Text="Yes, I want to compress" onClick={() => compressFileHandler(fileUrl)} />
                         <GlobalButton type="button" Text="No, download this version" onClick={() => handleDownload(fileUrl)} />
                     </div>
-
+                    {formatFileSizeNumber(sizeOfFile) < 10 && <p className='text-xs text-green-600 '>{`You can only compress the file if the size is more than 10 Mb`}</p>}
                     <button type="button" className='py-1 mt-10 text-xs border-2 rounded-full sm:text-sm px-7 border-emerald-500 text-emerald-500 hover:bg-emerald-500 hover:text-white' onClick={createNewClick} >Create New </button>
 
                 </div>
