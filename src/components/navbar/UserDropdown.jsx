@@ -12,7 +12,6 @@ function UserDropdown() {
         logoutApi()
         navigate('/login')
     }
-    console.log(user)
     return (
         <div className='relative flex gap-3 py-4 cursor-pointer group z-[10] '>
             <div className='w-6 h-6 overflow-hidden rounded-full sm:w-10 sm:h-10'>

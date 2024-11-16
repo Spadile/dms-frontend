@@ -23,7 +23,6 @@ function MainLayout() {
             return;
         }
         const user = parseJWT(token);
-        console.log(user)
         const { name, department, oid, unique_name } = user;
         if (user) {
             updateUser({ id: oid, name: name, department: department, email: unique_name });

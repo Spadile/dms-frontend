@@ -30,7 +30,6 @@ function ControlFileType() {
         setLoading(true)
         try {
             const types = await getFileTypeApi()
-            console.log(types)
             setableData(types?.document_types)
         } catch (error) {
             console.log(error.message)
