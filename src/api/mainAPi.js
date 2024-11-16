@@ -46,6 +46,7 @@ export const compressFilesApi = async (data) => {
 };
 
 export const deleteFileLinkApi = async (formData) => {
+  console.log(formData);
   try {
     const response = await axiosInstance.delete(`/delete-file`, formData);
     if (response?.status === 200) {

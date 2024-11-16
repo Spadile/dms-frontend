@@ -274,7 +274,7 @@ function DragAndDrop() {
                 saveAs(response?.data, getFileNameFromUrl(fileLink));
                 toast.success('Download completed!');
                 const deleted = await deleteFileLinkApi({ file_url: fileLink })
-                if (deleted.status === 200) {
+                if (deleted?.status === 200) {
                     createNewClick()
                 }
             }
