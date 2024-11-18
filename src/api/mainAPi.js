@@ -45,23 +45,6 @@ export const compressFilesApi = async (data) => {
   }
 };
 
-export const deleteFileLinkApi = async (formData) => {
-  console.log(formData);
-  try {
-    const response = await axiosInstance.delete(`/delete-file`, formData);
-    if (response?.status === 200) {
-      return response;
-    } else {
-      toast.error("Error, please try again");
-      return null;
-    }
-  } catch (error) {
-    console.error("API Error:", error.message);
-    toast.error("An error occurred. Please try again.");
-    return null;
-  }
-};
-
 export const getFileSize = async (fileUrl) => {
   try {
     const response = await fetch(fileUrl, { method: "HEAD" });
