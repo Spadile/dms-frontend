@@ -8,7 +8,7 @@ import { useStore } from '../../store/store';
 import excelImage from '../../assets/other/excel.png'
 import unknownImage from '../../assets/other/documents.png'
 import { useNavigate } from 'react-router-dom';
-import { compressFilesApi, deleteFileLinkApi, getFileSize, mergeFilesApi } from '../../api/mainAPi';
+import { compressFilesApi, getFileSize, mergeFilesApi } from '../../api/mainAPi';
 import { toast, Toaster } from 'sonner';
 import Swal from 'sweetalert2';
 import axiosInstance from '../../utils/axiosInstance';
@@ -30,6 +30,8 @@ function DragAndDrop() {
     const [sizeOfFile, setSizeOfFile] = useState(null)
     const [typeData, setTypeData] = useState([])
     const [loading, setLoading] = useState(false)
+
+    const [progress, setProgress] = useState(0);
 
     useEffect(() => {
         if (!employee?.name) {
@@ -260,28 +262,48 @@ function DragAndDrop() {
 
     const handleDownload = async (fileLink) => {
         setLoading(true)
-        const toastId = toast.loading("Downloading...")
+        setProgress(0);
+
+        // Show SweetAlert2 modal
+        Swal.fire({
+            title: 'Downloading...',
+            html: `
+      <div style="width: 100%; background-color: #f3f3f3; border-radius: 5px;">
+        <div id="progress-bar" style="width: 0%; background-color: #4caf50; height: 20px; border-radius: 5px;"></div>
+      </div>
+      <p>Progress: <b id="progress-number">0%</b></p>
+    `,
+            allowOutsideClick: false,
+            showConfirmButton: false
+        });
+
         try {
             const response = await axiosInstance.get(fileLink, {
                 responseType: 'blob',
                 onDownloadProgress: (progressEvent) => {
                     const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    // console.log(`Progress: ${progress}%`);
+                    console.log(`Progress: ${progress}%`);
+                    setProgress(progress);
+                    // Update SweetAlert2 dynamically
+                    Swal.update({
+                        html: `
+            <div style="width: 100%; background-color: #f3f3f3; border-radius: 5px;">
+              <div id="progress-bar" style="width: ${progress}%; background-color: #4caf50; height: 20px; border-radius: 5px;"></div>
+            </div>
+            <p>Progress: <b id="progress-number">${progress}%</b></p>
+          `
+                    });
                 },
             });
             if (response?.status === 200) {
-                toast.dismiss(toastId)
+                Swal.close()
                 saveAs(response?.data, getFileNameFromUrl(fileLink));
-                toast.success('Download completed!');
-                const deleted = await deleteFileLinkApi({ file_url: fileLink })
-                if (deleted?.status === 200) {
-                    createNewClick()
-                }
+                Swal.fire('Done!', 'The download has been completed.', 'success');
             }
         } catch (error) {
             console.error('Error downloading the file:', error);
+            Swal.fire('Error!', 'Failed to download the file.', 'error');
         } finally {
-            toast.dismiss(toastId)
             setLoading(false);
         }
 
