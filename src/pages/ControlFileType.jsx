@@ -6,18 +6,26 @@ import { toast, Toaster } from 'sonner';
 import GlobalButton from '../components/common/buttons/GlobalButton';
 import InputWithClose from '../components/common/inputFields/InputWithClose';
 import Swal from 'sweetalert2';
+import { useStore } from '../store/store';
+import { useNavigate } from 'react-router-dom';
 
 const breadcrumbPaths = [
     { label: 'Home', link: '/' },
     { label: 'File Type Management', link: '/control-file-type' },
 ];
 function ControlFileType() {
+    const navigate = useNavigate()
     const [tableData, setableData] = useState([])
     const [fileType, setFileType] = useState('')
     const [typeId, setTypeId] = useState('')
     const [loading, setLoading] = useState(false)
+    const user = useStore((state) => state.user)
+
 
     useEffect(() => {
+        if (user?.role !== 'admin' || user?.role !== 'Admin') {
+            navigate('/')
+        }
         refetchData()
     }, [])
 
