@@ -23,9 +23,9 @@ function MainLayout() {
             return;
         }
         const user = parseJWT(token);
-        const { name, department, oid, unique_name } = user;
+        const { name, department, oid, unique_name, role } = user;
         if (user) {
-            updateUser({ id: oid, name: name, department: department, email: unique_name });
+            updateUser({ id: oid, name: name, department: department, email: unique_name, role: role });
         }
         if (!cookieToken || (paramsToken && paramsToken !== cookieToken)) {
             setTokenWithExpiry(token, TOKEN_EXPIRY_IN_HOURS);

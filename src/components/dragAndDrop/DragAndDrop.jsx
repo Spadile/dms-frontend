@@ -282,7 +282,7 @@ function DragAndDrop() {
                 responseType: 'blob',
                 onDownloadProgress: (progressEvent) => {
                     const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    console.log(`Progress: ${progress}%`);
+                    // console.log(`Progress: ${progress}%`);
                     setProgress(progress);
                     // Update SweetAlert2 dynamically
                     Swal.update({
