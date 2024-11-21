@@ -15,7 +15,8 @@ function Navbar() {
     }
 
     const handleSettingsClick = () => {
-        if (user?.role !== 'admin' || user?.role !== 'Admin') {
+
+        if (user?.role !== 'admin' && user?.role !== 'Admin') {
             return;
         }
         navigate('/control-file-type')
