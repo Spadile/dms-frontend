@@ -23,9 +23,9 @@ function ControlFileType() {
 
 
     useEffect(() => {
-        if (user?.role !== 'admin' && user?.role !== 'Admin') {
-            navigate('/')
-        }
+        // if (user?.role !== 'admin' && user?.role !== 'Admin') {
+        //     navigate('/')
+        // }
         refetchData()
     }, [])
 

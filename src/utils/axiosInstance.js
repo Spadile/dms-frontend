@@ -46,9 +46,9 @@ axiosInstance.interceptors.response.use(
 
 // Function to handle token expiry
 const handleTokenExpiry = () => {
-  Cookies.remove("user-token");
-  Cookies.remove("token-expiry");
-  toast.warning("Your session has expired. Please log in again.");
+  // Cookies.remove("user-token");
+  // Cookies.remove("token-expiry");
+  // toast.warning("Your session has expired. Please log in again.");
 };
 
 // Centralized error handling
