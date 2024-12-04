@@ -22,8 +22,8 @@ function UserDropdown() {
                 <p className=''>{user?.email}</p>
             </div>
 
-            <div className='absolute hidden w-full text-gray-800 px-3 py-1 sm:py-2   bg-white border shadow-md group-hover:flex top-[100%] border-slate-200'>
-                <div className='flex items-center w-full gap-5 p-1 rounded-sm hover:bg-gray-100' onClick={handleLogOut}>
+            <div className='absolute hidden w-full min-w-fit text-gray-800  py-1 sm:py-2  px-1  bg-white border shadow-md group-hover:flex top-[100%] border-slate-200'>
+                <div className='flex items-center w-full gap-5 p-1 px-4 rounded-sm hover:bg-gray-200' onClick={handleLogOut}>
                     <IoLogOutOutline className='sm:text-lg animate-bounce' />
                     <p className='text-sm sm:text-base'>Logout </p>
                 </div>
