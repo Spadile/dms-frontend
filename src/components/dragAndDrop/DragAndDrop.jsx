@@ -233,16 +233,56 @@ function DragAndDrop() {
         setSelectedName((prev) => prev.filter((_, index) => index !== i));
     };
 
-    const handleRenameFile = (fileName, newName) => {
-        setFiles((prevFiles) =>
-            prevFiles.map(async (file, i) => {
-                if (file.name === fileName) {
+    // const handleRenameFile = (fileName, newName) => {
+    //     setFiles((prevFiles) =>
+    //         prevFiles.map(async (file, i) => {
+    //             if (file.name === fileName) {
 
+    //                 // Get the file extension
+    //                 const fileExtension = file?.name?.split('.').pop();
+
+    //                 // If the new name does not have an extension, add the original extension
+    //                 const renamedFileName = newName?.endsWith(`.${fileExtension}`)
+    //                     ? newName
+    //                     : `${newName}_${employee?.name}_${employee?.department}_${i}.${fileExtension}`;
+
+    //                 // Create a new File object while preserving all native properties (type, lastModified)
+    //                 const renamedFile = new File([file], renamedFileName, {
+    //                     type: file.type,
+    //                     lastModified: file.lastModified,
+    //                 });
+
+    //                 // Manually preserve custom properties from the original file
+
+
+    //                 const preview = await generatePreview(renamedFile);
+    //                 console.log('preview', preview)
+    //                 renamedFile.preview = preview;
+    //                 renamedFile.path = file.path;
+    //                 renamedFile.relativePath = file.relativePath;
+    //                 // for namve view in dropdown
+    //                 setSelectedName((prev) => {
+    //                     const newArr = [...prev];
+    //                     newArr[i] = newName; // Replace value at index i
+    //                     return newArr;
+    //                 });
+    //                 return renamedFile; // Return the new File object with the new name and preserved properties
+    //             }
+    //             return file; // No changes to other files
+    //         })
+    //     );
+    // };
+
+    const handleRenameFile = async (fileName, newName) => {
+        // Use a Promise.all to handle all the asynchronous renaming
+        const updatedFiles = await Promise.all(
+            files.map(async (file, i) => {
+                if (file.name === fileName) {
                     // Get the file extension
-                    const fileExtension = file.name.split('.').pop();
+                    const fileExtension = file?.name?.split('.').pop();
 
                     // If the new name does not have an extension, add the original extension
-                    const renamedFileName = newName.endsWith(`.${fileExtension}`)
+                    const renamedFileName = newName?.endsWith(`.${fileExtension}`)
                         ? newName
                         : `${newName}_${employee?.name}_${employee?.department}_${i}.${fileExtension}`;
 
@@ -252,25 +292,27 @@ function DragAndDrop() {
                         lastModified: file.lastModified,
                     });
 
-                    // Manually preserve custom properties from the original file
-
-
+                    // Await the preview generation before assigning it
                     const preview = await generatePreview(renamedFile);
-
                     renamedFile.preview = preview;
                     renamedFile.path = file.path;
                     renamedFile.relativePath = file.relativePath;
-                    // for namve view in dropdown
+
+                    // for name view in dropdown
                     setSelectedName((prev) => {
                         const newArr = [...prev];
                         newArr[i] = newName; // Replace value at index i
                         return newArr;
                     });
+
                     return renamedFile; // Return the new File object with the new name and preserved properties
                 }
                 return file; // No changes to other files
             })
         );
+
+        // Once all promises are resolved, update the state
+        setFiles(updatedFiles);
     };
 
     const handleDownloadZip = async () => {
@@ -391,7 +433,6 @@ function DragAndDrop() {
 
 
     const handleDownload = async (fileLink) => {
-        console.log(fileLink)
         setLoading(true)
         setProgress(0);
 
@@ -455,8 +496,6 @@ function DragAndDrop() {
         setSizeOfFile(null)
     }
 
-
-    console.log('files', files)
 
     return (
         <div className='relative w-full p-5 sm:p-10'>
@@ -523,15 +562,15 @@ function DragAndDrop() {
                                             ) : (
                                                 <img src={file?.preview} alt={file?.name} className="object-cover w-full h-full rounded-md" />
                                             )} */}
-                                            {file.preview?.type === 'image' ? (
-                                                <img src={file.preview.data} alt={file.name} className="object-cover w-full h-full rounded-md" />
-                                            ) : file.preview?.type === 'pdf' ? (
-                                                <iframe src={`${file.preview.data}#toolbar=0&navpanes=0`} className="w-40 no-scrollbar" height="100%" title={file.name}></iframe>
-                                            ) : file.preview?.type === 'table' ? (
+                                            {file?.preview?.type === 'image' ? (
+                                                <img src={file?.preview?.data} alt={file?.name} className="object-cover w-full h-full rounded-md" />
+                                            ) : file?.preview?.type === 'pdf' ? (
+                                                <iframe src={`${file?.preview?.data}#toolbar=0&navpanes=0`} className="w-40 no-scrollbar" height="100%" title={file?.name}></iframe>
+                                            ) : file?.preview?.type === 'table' ? (
                                                 <div className="h-full overflow-auto border rounded-md">
                                                     <table className="min-w-full text-xs text-left text-gray-600 bg-white ">
                                                         <tbody>
-                                                            {file.preview.data.map((row, rowIndex) => (
+                                                            {file?.preview?.data?.map((row, rowIndex) => (
                                                                 <tr key={rowIndex}>
                                                                     {row.map((cell, cellIndex) => (
                                                                         <td key={cellIndex} className="px-2 py-1 border">
@@ -543,12 +582,12 @@ function DragAndDrop() {
                                                         </tbody>
                                                     </table>
                                                 </div>
-                                            ) : file.preview?.type === 'text' ? (
+                                            ) : file?.preview?.type === 'text' ? (
                                                 <pre className="p-2 overflow-auto text-sm bg-gray-100 rounded-md max-h-40">
-                                                    {file.preview.data}
+                                                    {file?.preview?.data}
                                                 </pre>
                                             ) : (
-                                                <img src={file.preview.data || unknownImage} alt={file.name} className="object-cover w-full h-full rounded-md" />
+                                                <img src={file?.preview?.data || unknownImage} alt={file?.name} className="object-cover w-full h-full rounded-md" />
                                             )}
                                         </div>
                                         <p className="px-3 py-1 text-xs truncate">{file?.name}</p>
@@ -580,16 +619,19 @@ function DragAndDrop() {
             }
             {fileUrl &&
                 <div className='w-full min-h-[65vh]  items-center flex flex-col  mt-10 gap-10 justify-center'>
-
-                    <div className="max-w-68 max-h-80">
-                        <div className="px-3 py-3 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md aspect-auto">
-                            <iframe src={`${fileUrl}#toolbar=0&navpanes=0`} className="" height='100%' width='100%' title={'Merged Pdf'}></iframe>
+                    <div className="w-40 2xl:w-64 2xl:h-64 xl:w-60 xl:h-60 sm:w-52 lg:h-52">
+                        <div className="w-full h-full px-2 py-2 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md">
+                            <iframe
+                                src={`${fileUrl}#toolbar=0&navpanes=0`}
+                                className="w-full lg:h-full "
+                                title={'Merged Pdf'}
+                            ></iframe>
                         </div>
                     </div>
 
                     <div className='text-center' >
                         <p className='text-lg font-semibold text-gray-800 sm:text-xl'>Successfully converted & merged</p>
-                        <p className='text-sm text-gray-600 sm:text-base'>{` The file size is ${formatFileSize(sizeOfFile)} size. Do you want to compress?`}</p>
+                        <p className='text-sm text-gray-600 sm:text-base'>The file size is <span className={formatFileSizeNumber(sizeOfFile) < 10 ? 'font-semibold text-green-700' : 'text-orange-700 font-semibold'}>{formatFileSize(sizeOfFile)}</span>  size. Do you want to compress?</p>
                     </div>
                     <div className="flex flex-col items-center justify-center w-full px-5 mt-10 gap-7 md:gap-10 md:flex-row lg:px-40 xl:px-60">
                         <GlobalButton type="button" disabled={formatFileSizeNumber(sizeOfFile) < 10 || loading ? true : false} Text="Yes, I want to compress" onClick={() => compressFileHandler(fileUrl)} />
