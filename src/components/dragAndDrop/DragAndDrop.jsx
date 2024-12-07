@@ -261,6 +261,7 @@ function DragAndDrop() {
 
 
     const handleDownload = async (fileLink) => {
+        console.log(fileLink)
         setLoading(true)
         setProgress(0);
 
