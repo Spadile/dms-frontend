@@ -14,6 +14,8 @@ import Swal from 'sweetalert2';
 import axiosInstance from '../../utils/axiosInstance';
 import { convertToUnderscore, formatFileSize, formatFileSizeNumber } from '../../utils/functions';
 import { getFileTypeApi } from '../../api/adminApi';
+import * as XLSX from 'xlsx';
+import mammoth from 'mammoth';
 
 
 function DragAndDrop() {
@@ -66,40 +68,164 @@ function DragAndDrop() {
 
     }
 
-    const generatePreview = (file) => {
+    // const generatePreview = (file) => {
 
+    //     if (file.type.startsWith('image/')) {
+    //         return URL.createObjectURL(file);
+    //     } else if (file.type === 'application/pdf') {
+    //         return URL.createObjectURL(file);
+    //     } else if (
+    //         file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || // .xlsx
+    //         file.type === 'application/vnd.ms-excel' || // .xls 
+    //         file.type === 'text/csv'
+    //     ) {
+    //         return excelImage; // Placeholder for Excel files
+    //     } else {
+    //         return unknownImage; // Generic placeholder
+    //     }
+    // };
+
+
+    const generatePreview = async (file) => {
         if (file.type.startsWith('image/')) {
-            return URL.createObjectURL(file);
+            // Preview for images
+            return { type: 'image', data: URL.createObjectURL(file) };
         } else if (file.type === 'application/pdf') {
-            return URL.createObjectURL(file);
+            // Preview for PDFs
+            return { type: 'pdf', data: URL.createObjectURL(file) };
         } else if (
             file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || // .xlsx
-            file.type === 'application/vnd.ms-excel' || // .xls 
+            file.type === 'application/vnd.ms-excel' || // .xls
+            file.type === 'application/vnd.ms-excel.sheet.macroEnabled.12' || // .xlsm
+            file.type === 'application/vnd.oasis.opendocument.spreadsheet' || // .ods
             file.type === 'text/csv'
         ) {
-            return excelImage; // Placeholder for Excel files
+            // Parse Excel or CSV files
+            const data = await parseExcelOrCSV(file);
+            return { type: 'table', data }; // Return as table data
+        } else if (
+            file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || // .docx
+            file.type === 'application/msword' || // .doc
+            file.type === 'text/plain' // .txt
+        ) {
+            // Parse Word or text files
+            const data = await parseDocument(file);
+            return { type: 'text', data }; // Return as text content
         } else {
-            return unknownImage; // Generic placeholder
+            // Fallback for unknown formats
+            return { type: 'unknown', data: unknownImage };
         }
     };
 
 
-    const onDrop = useCallback((acceptedFiles) => {
-        setFiles(acceptedFiles.map((file) => Object.assign(file, {
-            preview: generatePreview(file)
-        })));
+    const parseExcelOrCSV = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const binary = e.target.result;
+                const workbook = XLSX.read(binary, { type: 'binary' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const data = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // 2D array of data
+                resolve(data);
+            };
+            reader.onerror = () => reject(reader.error);
+            reader.readAsBinaryString(file);
+        });
+    };
+
+
+    // const parseDocument = (file) => {
+    //     return new Promise((resolve, reject) => {
+    //         const reader = new FileReader();
+    //         reader.onload = async (e) => {
+    //             const content = e.target.result;
+    //             if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    //                 // Parse .docx files
+    //                 const { value } = await mammoth.extractRawText({ arrayBuffer: content });
+    //                 resolve(value); // Extracted text
+    //             } else {
+    //                 // Parse .txt or .doc (basic text)
+    //                 resolve(content);
+    //             }
+    //         };
+    //         reader.onerror = () => reject(reader.error);
+    //         reader.readAsArrayBuffer(file);
+    //     });
+    // };
+
+    const parseDocument = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = async (e) => {
+                const content = e.target.result;
+
+                // Check if the file is a .docx file
+                if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                    // Parse .docx files using Mammoth
+                    const { value } = await mammoth.extractRawText({ arrayBuffer: content });
+                    resolve(value); // Extracted text from the .docx file
+                } else if (file.type === 'text/plain') {
+                    // For .txt files, read as text directly
+                    resolve(content); // Content is a string already
+                } else {
+                    // For other types (like .doc), you can handle them as needed
+                    resolve(content);
+                }
+            };
+
+            reader.onerror = () => reject(reader.error);
+
+            // Use readAsText for .txt files and readAsArrayBuffer for .docx files or other formats
+            if (file.type === 'text/plain') {
+                reader.readAsText(file); // Read text files as plain text
+            } else {
+                reader.readAsArrayBuffer(file); // Read .docx and other files as array buffers
+            }
+        });
+    };
+
+
+    // const onDrop = useCallback(async (acceptedFiles) => {
+    //     setFiles(acceptedFiles.map(async (file) => Object.assign(file, {
+    //         preview: await generatePreview(file)
+    //     })));
+    // }, []);
+
+    const onDrop = useCallback(async (acceptedFiles) => {
+        const resolvedFiles = await Promise.all(
+            acceptedFiles.map(async (file) =>
+                Object.assign(file, {
+                    preview: await generatePreview(file),
+                })
+            )
+        );
+        setFiles(resolvedFiles); // Set resolved files in the state
     }, []);
 
     const { getRootProps, getInputProps, isDragActive, open } = useDropzone({ onDrop, noClick: true });
 
-    const handleManualUpload = (event) => {
-        const selectedFiles = Array.from(event.target.files).map((file) =>
+    // const handleManualUpload = (event) => {
+    //     const selectedFiles = Array.from(event.target.files).map(async (file) =>
+    //         Object.assign(file, {
+    //             preview: await generatePreview(file),
+    //         })
+    //     );
+    //     setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
+    //     setIsMergeActive(false)
+    // };
+
+    const handleManualUpload = async (event) => {
+        const selectedFilesPromises = Array.from(event.target.files).map(async (file) =>
             Object.assign(file, {
-                preview: generatePreview(file),
+                preview: await generatePreview(file),
             })
         );
-        setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
-        setIsMergeActive(false)
+
+        const resolvedFiles = await Promise.all(selectedFilesPromises); // Resolve all promises
+        setFiles((prevFiles) => [...prevFiles, ...resolvedFiles]); // Update state with resolved files
+        setIsMergeActive(false);
     };
 
     const handleRemoveFile = (fileName, i) => {
@@ -109,7 +235,7 @@ function DragAndDrop() {
 
     const handleRenameFile = (fileName, newName) => {
         setFiles((prevFiles) =>
-            prevFiles.map((file, i) => {
+            prevFiles.map(async (file, i) => {
                 if (file.name === fileName) {
 
                     // Get the file extension
@@ -128,7 +254,10 @@ function DragAndDrop() {
 
                     // Manually preserve custom properties from the original file
 
-                    renamedFile.preview = generatePreview(renamedFile);
+
+                    const preview = await generatePreview(renamedFile);
+
+                    renamedFile.preview = preview;
                     renamedFile.path = file.path;
                     renamedFile.relativePath = file.relativePath;
                     // for namve view in dropdown
@@ -177,7 +306,6 @@ function DragAndDrop() {
 
 
     const convertAndMergeHandler = async () => {
-
         const formData = new FormData();
         // formData.append('files', files);
         formData.append('name', convertToUnderscore(employee?.name));
@@ -249,14 +377,16 @@ function DragAndDrop() {
 
 
 
-    const sideViewSetHandler = (e, file) => {
+    const sideViewSetHandler = async (e, file) => {
         const box = e.currentTarget;
         const boxRect = box.getBoundingClientRect();
         const screenWidth = window.innerWidth;
         const isCloserToRight = boxRect.right > screenWidth / 2;
 
         setIsRight(isCloserToRight)
-        setPreviewData({ name: file.name, type: file.type, preview: generatePreview(file) })
+
+        const preview = await generatePreview(file);
+        setPreviewData({ name: file.name, type: file.type, preview: preview })
     }
 
 
@@ -325,6 +455,9 @@ function DragAndDrop() {
         setSizeOfFile(null)
     }
 
+
+    console.log('files', files)
+
     return (
         <div className='relative w-full p-5 sm:p-10'>
             <Toaster position='top-center' richColors />
@@ -377,18 +510,45 @@ function DragAndDrop() {
                                 {files?.map((file, index) => (
                                     <div key={file?.name} className=" max-w-36 sm:max-w-44">
                                         <div className='flex justify-end mb-2'>
-                                            <IoMdCloseCircleOutline onClick={() => handleRemoveFile(file?.name, index)} className="text-lg text-gray-500 rounded-full cursor-pointer" />
+                                            <IoMdCloseCircleOutline onClick={() => handleRemoveFile(file?.name, index)} className="text-lg text-red-600 duration-300 ease-in-out rounded-full cursor-pointer hover:scale-110" />
                                         </div>
-                                        <div className="h-48 px-3 py-3 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md w-36 sm:w-44 sm:h-52 no-scrollbar"
+                                        <div className="h-48 px-1 py-1 overflow-hidden border rounded-md shadow-lg border-slate-300 bg-slate-300 w-36 sm:w-44 sm:h-52 no-scrollbar"
                                             onMouseEnter={(e) => sideViewSetHandler(e, file)}
                                             onMouseLeave={() => setPreviewData(null)}>
 
-                                            {file.type.startsWith('image/') ? (
+                                            {/* {file.type.startsWith('image/') ? (
                                                 <img src={file?.preview} alt={file?.name} className="object-cover w-full h-full rounded-md" />
                                             ) : file.type === 'application/pdf' ? (
                                                 <iframe src={file?.preview} className="w-40 no-scrollbar" height='100%' title={file.name}></iframe>
                                             ) : (
                                                 <img src={file?.preview} alt={file?.name} className="object-cover w-full h-full rounded-md" />
+                                            )} */}
+                                            {file.preview?.type === 'image' ? (
+                                                <img src={file.preview.data} alt={file.name} className="object-cover w-full h-full rounded-md" />
+                                            ) : file.preview?.type === 'pdf' ? (
+                                                <iframe src={`${file.preview.data}#toolbar=0&navpanes=0`} className="w-40 no-scrollbar" height="100%" title={file.name}></iframe>
+                                            ) : file.preview?.type === 'table' ? (
+                                                <div className="h-full overflow-auto border rounded-md">
+                                                    <table className="min-w-full text-xs text-left text-gray-600 bg-white ">
+                                                        <tbody>
+                                                            {file.preview.data.map((row, rowIndex) => (
+                                                                <tr key={rowIndex}>
+                                                                    {row.map((cell, cellIndex) => (
+                                                                        <td key={cellIndex} className="px-2 py-1 border">
+                                                                            {cell}
+                                                                        </td>
+                                                                    ))}
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            ) : file.preview?.type === 'text' ? (
+                                                <pre className="p-2 overflow-auto text-sm bg-gray-100 rounded-md max-h-40">
+                                                    {file.preview.data}
+                                                </pre>
+                                            ) : (
+                                                <img src={file.preview.data || unknownImage} alt={file.name} className="object-cover w-full h-full rounded-md" />
                                             )}
                                         </div>
                                         <p className="px-3 py-1 text-xs truncate">{file?.name}</p>
@@ -421,9 +581,9 @@ function DragAndDrop() {
             {fileUrl &&
                 <div className='w-full min-h-[65vh]  items-center flex flex-col  mt-10 gap-10 justify-center'>
 
-                    <div className="max-w-60 max-h-72">
+                    <div className="max-w-68 max-h-80">
                         <div className="px-3 py-3 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md aspect-auto">
-                            <iframe src={fileUrl} className="" height='100%' width='100%' title={'Merged Pdf'}></iframe>
+                            <iframe src={`${fileUrl}#toolbar=0&navpanes=0`} className="" height='100%' width='100%' title={'Merged Pdf'}></iframe>
                         </div>
                     </div>
 
@@ -441,7 +601,7 @@ function DragAndDrop() {
                 </div>
             }
 
-            {previewData &&
+            {/* {previewData &&
                 <div className={` top-0 ${isRight ? 'left-0' : 'right-0'} z-[100] fixed max-h-screen hidden lg:inline-block px-3 py-3 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md w-[30vw] h-full no-scrollbar`}>
                     {previewData?.type.startsWith('image/') ? (
                         <img src={previewData?.preview} alt={previewData?.name} className="object-cover w-full h-auto rounded-md" />
@@ -450,7 +610,57 @@ function DragAndDrop() {
                     ) : (
                         <img src={previewData?.preview} alt={previewData?.name} className="object-cover w-full h-auto rounded-md" />
                     )}
-                </div>}
+                </div>} */}
+
+            {previewData && (
+                <div
+                    className={`top-0 ${isRight ? 'left-0' : 'right-0'} z-[100] fixed max-h-screen hidden lg:inline-block px-2 py-2 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md w-[35vw] h-full no-scrollbar`}
+                >
+                    {previewData.preview.type === 'image' ? (
+                        <img
+                            src={previewData.preview.data}
+                            alt={previewData.name}
+                            className="object-cover w-full h-auto rounded-md"
+                        />
+                    ) : previewData.preview.type === 'pdf' ? (
+                        <iframe
+                            src={`${previewData.preview.data}#toolbar=0&navpanes=0&scrollbar=0`}
+                            className="w-full no-scrollbar"
+                            height="100%"
+                            title={previewData.name}
+                        ></iframe>
+                    ) : previewData.preview.type === 'table' ? (
+                        <div className="max-h-full overflow-auto bg-white border rounded-md">
+                            <table className="min-w-full text-sm text-left text-gray-500">
+                                <tbody>
+                                    {previewData.preview.data.map((row, rowIndex) => (
+                                        <tr key={rowIndex}>
+                                            {row.map((cell, cellIndex) => (
+                                                <td key={cellIndex} className="px-2 py-1 border">
+                                                    {cell}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : previewData.preview.type === 'text' ? (
+                        <pre className="max-h-full p-2 overflow-auto text-sm bg-gray-100 rounded-md">
+                            {previewData.preview.data}
+                        </pre>
+                    ) : (
+                        <div className="p-4 text-center">
+                            <p className="text-gray-500">Unsupported file type</p>
+                            <img
+                                src={unknownImage} // Placeholder for unsupported file types
+                                alt="Unsupported"
+                                className="object-cover w-full h-auto rounded-md"
+                            />
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
