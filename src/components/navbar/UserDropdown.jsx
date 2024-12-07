@@ -23,9 +23,9 @@ function UserDropdown() {
             </div>
 
             <div className='absolute hidden w-full min-w-fit text-gray-800  py-1 sm:py-2  px-1  bg-white border shadow-md group-hover:flex top-[100%] border-slate-200'>
-                <div className='flex items-center w-full gap-5 p-1 px-4 rounded-sm hover:bg-gray-200' onClick={handleLogOut}>
-                    <IoLogOutOutline className='sm:text-lg animate-bounce' />
-                    <p className='text-sm sm:text-base'>Logout </p>
+                <div className='flex items-center w-full gap-1 p-1 rounded-sm sm:px-4 sm:gap-5 hover:bg-gray-200' onClick={handleLogOut}>
+                    <IoLogOutOutline className='sm:text-lg sm:animate-bounce' />
+                    <p className='text-xs sm:text-base'>Logout </p>
                 </div>
             </div>
         </div>
