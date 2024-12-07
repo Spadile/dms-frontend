@@ -5,7 +5,6 @@ import { IoMdCloseCircleOutline } from 'react-icons/io';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { useStore } from '../../store/store';
-import excelImage from '../../assets/other/excel.png'
 import unknownImage from '../../assets/other/documents.png'
 import { useNavigate } from 'react-router-dom';
 import { compressFilesApi, getFileSize, mergeFilesApi } from '../../api/mainAPi';
@@ -16,6 +15,8 @@ import { convertToUnderscore, formatFileSize, formatFileSizeNumber } from '../..
 import { getFileTypeApi } from '../../api/adminApi';
 import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
+import { ALLOWED_DATA_EXTENSIONS } from '../../utils/constants';
+import SidePreview from './SidePreview';
 
 
 function DragAndDrop() {
@@ -32,8 +33,6 @@ function DragAndDrop() {
     const [sizeOfFile, setSizeOfFile] = useState(null)
     const [typeData, setTypeData] = useState([])
     const [loading, setLoading] = useState(false)
-
-    const [progress, setProgress] = useState(0);
 
     useEffect(() => {
         if (!employee?.name) {
@@ -67,23 +66,6 @@ function DragAndDrop() {
         }
 
     }
-
-    // const generatePreview = (file) => {
-
-    //     if (file.type.startsWith('image/')) {
-    //         return URL.createObjectURL(file);
-    //     } else if (file.type === 'application/pdf') {
-    //         return URL.createObjectURL(file);
-    //     } else if (
-    //         file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || // .xlsx
-    //         file.type === 'application/vnd.ms-excel' || // .xls 
-    //         file.type === 'text/csv'
-    //     ) {
-    //         return excelImage; // Placeholder for Excel files
-    //     } else {
-    //         return unknownImage; // Generic placeholder
-    //     }
-    // };
 
 
     const generatePreview = async (file) => {
@@ -135,25 +117,6 @@ function DragAndDrop() {
     };
 
 
-    // const parseDocument = (file) => {
-    //     return new Promise((resolve, reject) => {
-    //         const reader = new FileReader();
-    //         reader.onload = async (e) => {
-    //             const content = e.target.result;
-    //             if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-    //                 // Parse .docx files
-    //                 const { value } = await mammoth.extractRawText({ arrayBuffer: content });
-    //                 resolve(value); // Extracted text
-    //             } else {
-    //                 // Parse .txt or .doc (basic text)
-    //                 resolve(content);
-    //             }
-    //         };
-    //         reader.onerror = () => reject(reader.error);
-    //         reader.readAsArrayBuffer(file);
-    //     });
-    // };
-
     const parseDocument = (file) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -187,12 +150,6 @@ function DragAndDrop() {
     };
 
 
-    // const onDrop = useCallback(async (acceptedFiles) => {
-    //     setFiles(acceptedFiles.map(async (file) => Object.assign(file, {
-    //         preview: await generatePreview(file)
-    //     })));
-    // }, []);
-
     const onDrop = useCallback(async (acceptedFiles) => {
         const resolvedFiles = await Promise.all(
             acceptedFiles.map(async (file) =>
@@ -201,20 +158,13 @@ function DragAndDrop() {
                 })
             )
         );
-        setFiles(resolvedFiles); // Set resolved files in the state
+        if (isFileAllowed(resolvedFiles)) {
+            setFiles(resolvedFiles); // Set resolved files in the state
+        }
     }, []);
 
     const { getRootProps, getInputProps, isDragActive, open } = useDropzone({ onDrop, noClick: true });
 
-    // const handleManualUpload = (event) => {
-    //     const selectedFiles = Array.from(event.target.files).map(async (file) =>
-    //         Object.assign(file, {
-    //             preview: await generatePreview(file),
-    //         })
-    //     );
-    //     setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
-    //     setIsMergeActive(false)
-    // };
 
     const handleManualUpload = async (event) => {
         const selectedFilesPromises = Array.from(event.target.files).map(async (file) =>
@@ -223,9 +173,23 @@ function DragAndDrop() {
             })
         );
 
-        const resolvedFiles = await Promise.all(selectedFilesPromises); // Resolve all promises
-        setFiles((prevFiles) => [...prevFiles, ...resolvedFiles]); // Update state with resolved files
+        const resolvedFiles = await Promise.all(selectedFilesPromises); // Resolve all promises 
+        if (isFileAllowed(resolvedFiles)) {
+            setFiles((prevFiles) => [...prevFiles, ...resolvedFiles]); // Update state with resolved files
+        }
         setIsMergeActive(false);
+    };
+
+
+    const isFileAllowed = (fileData) => {
+        for (const file of fileData) {
+            const fileExtension = file?.name?.split('.').pop().toLowerCase();
+            if (!ALLOWED_DATA_EXTENSIONS.includes(fileExtension)) {
+                toast.warning(`This file type - ${fileExtension} - is not allowed. Please remove ${file?.name}.`);
+                return false;
+            }
+        }
+        return true;
     };
 
     const handleRemoveFile = (fileName, i) => {
@@ -233,45 +197,6 @@ function DragAndDrop() {
         setSelectedName((prev) => prev.filter((_, index) => index !== i));
     };
 
-    // const handleRenameFile = (fileName, newName) => {
-    //     setFiles((prevFiles) =>
-    //         prevFiles.map(async (file, i) => {
-    //             if (file.name === fileName) {
-
-    //                 // Get the file extension
-    //                 const fileExtension = file?.name?.split('.').pop();
-
-    //                 // If the new name does not have an extension, add the original extension
-    //                 const renamedFileName = newName?.endsWith(`.${fileExtension}`)
-    //                     ? newName
-    //                     : `${newName}_${employee?.name}_${employee?.department}_${i}.${fileExtension}`;
-
-    //                 // Create a new File object while preserving all native properties (type, lastModified)
-    //                 const renamedFile = new File([file], renamedFileName, {
-    //                     type: file.type,
-    //                     lastModified: file.lastModified,
-    //                 });
-
-    //                 // Manually preserve custom properties from the original file
-
-
-    //                 const preview = await generatePreview(renamedFile);
-    //                 console.log('preview', preview)
-    //                 renamedFile.preview = preview;
-    //                 renamedFile.path = file.path;
-    //                 renamedFile.relativePath = file.relativePath;
-    //                 // for namve view in dropdown
-    //                 setSelectedName((prev) => {
-    //                     const newArr = [...prev];
-    //                     newArr[i] = newName; // Replace value at index i
-    //                     return newArr;
-    //                 });
-    //                 return renamedFile; // Return the new File object with the new name and preserved properties
-    //             }
-    //             return file; // No changes to other files
-    //         })
-    //     );
-    // };
 
     const handleRenameFile = async (fileName, newName) => {
         // Use a Promise.all to handle all the asynchronous renaming
@@ -320,7 +245,6 @@ function DragAndDrop() {
             console.error("No files to download");
             return;
         }
-
         const zip = new JSZip();
 
         for (const file of files) {
@@ -348,6 +272,9 @@ function DragAndDrop() {
 
 
     const convertAndMergeHandler = async () => {
+        if (!isFileAllowed(files)) {
+            return;
+        }
         const formData = new FormData();
         // formData.append('files', files);
         formData.append('name', convertToUnderscore(employee?.name));
@@ -434,7 +361,6 @@ function DragAndDrop() {
 
     const handleDownload = async (fileLink) => {
         setLoading(true)
-        setProgress(0);
 
         // Show SweetAlert2 modal
         Swal.fire({
@@ -454,9 +380,6 @@ function DragAndDrop() {
                 responseType: 'blob',
                 onDownloadProgress: (progressEvent) => {
                     const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    // console.log(`Progress: ${progress}%`);
-                    setProgress(progress);
-                    // Update SweetAlert2 dynamically
                     Swal.update({
                         html: `
             <div style="width: 100%; background-color: #f3f3f3; border-radius: 5px;">
@@ -555,13 +478,6 @@ function DragAndDrop() {
                                             onMouseEnter={(e) => sideViewSetHandler(e, file)}
                                             onMouseLeave={() => setPreviewData(null)}>
 
-                                            {/* {file.type.startsWith('image/') ? (
-                                                <img src={file?.preview} alt={file?.name} className="object-cover w-full h-full rounded-md" />
-                                            ) : file.type === 'application/pdf' ? (
-                                                <iframe src={file?.preview} className="w-40 no-scrollbar" height='100%' title={file.name}></iframe>
-                                            ) : (
-                                                <img src={file?.preview} alt={file?.name} className="object-cover w-full h-full rounded-md" />
-                                            )} */}
                                             {file?.preview?.type === 'image' ? (
                                                 <img src={file?.preview?.data} alt={file?.name} className="object-cover w-full h-full rounded-md" />
                                             ) : file?.preview?.type === 'pdf' ? (
@@ -643,66 +559,7 @@ function DragAndDrop() {
                 </div>
             }
 
-            {/* {previewData &&
-                <div className={` top-0 ${isRight ? 'left-0' : 'right-0'} z-[100] fixed max-h-screen hidden lg:inline-block px-3 py-3 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md w-[30vw] h-full no-scrollbar`}>
-                    {previewData?.type.startsWith('image/') ? (
-                        <img src={previewData?.preview} alt={previewData?.name} className="object-cover w-full h-auto rounded-md" />
-                    ) : previewData?.type === 'application/pdf' ? (
-                        <iframe src={previewData?.preview} className="w-full no-scrollbar" height='100%' title={previewData?.name}></iframe>
-                    ) : (
-                        <img src={previewData?.preview} alt={previewData?.name} className="object-cover w-full h-auto rounded-md" />
-                    )}
-                </div>} */}
-
-            {previewData && (
-                <div
-                    className={`top-0 ${isRight ? 'left-0' : 'right-0'} z-[100] fixed max-h-screen hidden lg:inline-block px-2 py-2 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md w-[35vw] h-full no-scrollbar`}
-                >
-                    {previewData.preview.type === 'image' ? (
-                        <img
-                            src={previewData.preview.data}
-                            alt={previewData.name}
-                            className="object-cover w-full h-auto rounded-md"
-                        />
-                    ) : previewData.preview.type === 'pdf' ? (
-                        <iframe
-                            src={`${previewData.preview.data}#toolbar=0&navpanes=0&scrollbar=0`}
-                            className="w-full no-scrollbar"
-                            height="100%"
-                            title={previewData.name}
-                        ></iframe>
-                    ) : previewData.preview.type === 'table' ? (
-                        <div className="max-h-full overflow-auto bg-white border rounded-md">
-                            <table className="min-w-full text-sm text-left text-gray-500">
-                                <tbody>
-                                    {previewData.preview.data.map((row, rowIndex) => (
-                                        <tr key={rowIndex}>
-                                            {row.map((cell, cellIndex) => (
-                                                <td key={cellIndex} className="px-2 py-1 border">
-                                                    {cell}
-                                                </td>
-                                            ))}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : previewData.preview.type === 'text' ? (
-                        <pre className="max-h-full p-2 overflow-auto text-sm bg-gray-100 rounded-md">
-                            {previewData.preview.data}
-                        </pre>
-                    ) : (
-                        <div className="p-4 text-center">
-                            <p className="text-gray-500">Unsupported file type</p>
-                            <img
-                                src={unknownImage} // Placeholder for unsupported file types
-                                alt="Unsupported"
-                                className="object-cover w-full h-auto rounded-md"
-                            />
-                        </div>
-                    )}
-                </div>
-            )}
+            {previewData && <SidePreview previewData={previewData} isRight={isRight} unknownImage={unknownImage} />}
         </div>
     );
 }
