@@ -1,7 +1,7 @@
 import { INPUT_MAX_LENGTH } from '@/utils/constants';
 import React from 'react'
 
-function InputField({ placeholder = 'Enter', type = "text", value, onChange, required, name = '', disabled = false, minLength = 2, maxLength = INPUT_MAX_LENGTH, validateMessage = 'Please fill out this field.' }) {
+function InputField({ placeholder = 'Enter', type = "text", value, onChange, required, name = '', disabled = false, minLength = 4, maxLength = INPUT_MAX_LENGTH, validateMessage = 'Please fill out this field.' }) {
 
 
     const validateInput = (e) => {
