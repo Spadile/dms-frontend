@@ -125,11 +125,11 @@ function DragAndDrop() {
                 const content = e.target.result;
 
                 // Check if the file is a .docx file
-                if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                if (file?.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
                     // Parse .docx files using Mammoth
                     const { value } = await mammoth.extractRawText({ arrayBuffer: content });
                     resolve(value); // Extracted text from the .docx file
-                } else if (file.type === 'text/plain') {
+                } else if (file?.type === 'text/plain') {
                     // For .txt files, read as text directly
                     resolve(content); // Content is a string already
                 } else {
@@ -152,7 +152,7 @@ function DragAndDrop() {
 
     const onDrop = useCallback(async (acceptedFiles) => {
         const resolvedFiles = await Promise.all(
-            acceptedFiles.map(async (file) =>
+            acceptedFiles?.map(async (file) =>
                 Object.assign(file, {
                     preview: await generatePreview(file),
                 })
@@ -167,7 +167,7 @@ function DragAndDrop() {
 
 
     const handleManualUpload = async (event) => {
-        const selectedFilesPromises = Array.from(event.target.files).map(async (file) =>
+        const selectedFilesPromises = Array.from(event.target.files)?.map(async (file) =>
             Object.assign(file, {
                 preview: await generatePreview(file),
             })
@@ -184,7 +184,7 @@ function DragAndDrop() {
     const isFileAllowed = (fileData) => {
         for (const file of fileData) {
             const fileExtension = file?.name?.split('.').pop().toLowerCase();
-            if (!ALLOWED_DATA_EXTENSIONS.includes(fileExtension)) {
+            if (!ALLOWED_DATA_EXTENSIONS?.includes(fileExtension)) {
                 toast.warning(`This file type - ${fileExtension} - is not allowed. Please remove ${file?.name}.`);
                 return false;
             }
