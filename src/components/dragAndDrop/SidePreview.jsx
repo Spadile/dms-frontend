@@ -1,10 +1,15 @@
 import React from 'react'
+import { MdClose } from 'react-icons/md'
 
-function SidePreview({ previewData, isRight, unknownImage }) {
+function SidePreview({ previewData, isRight, unknownImage, topPosition, onCloseClick }) {
+
     return (
         <div
-            className={`top-0 ${isRight ? 'left-0' : 'right-0'} z-[100] fixed max-h-screen hidden lg:inline-block px-2 py-2 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md w-[35vw] h-full no-scrollbar`}
+            className={`${isRight ? 'left-0' : 'right-0'} ${topPosition < 80 ? 'top-20 max-h-[90vh]' : 'top-0 max-h-screen'} group z-[100] fixed  hidden lg:inline-block py-2 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md w-[35vw] h-full no-scrollbar`}
         >
+            <div className='absolute top-0 justify-end hidden w-full px-5 py-3 transition-transform bg-opacity-60 bg-slate-800 group-hover:flex'>
+                <MdClose className='text-2xl text-white cursor-pointer hover:scale-110' onClick={onCloseClick} />
+            </div>
             {previewData?.preview?.type === 'image' ? (
                 <img
                     src={previewData?.preview?.data}
