@@ -33,7 +33,7 @@ function DragAndDrop() {
     const [sizeOfFile, setSizeOfFile] = useState(null)
     const [typeData, setTypeData] = useState([])
     const [loading, setLoading] = useState(false)
-    const [topPosition, setTopPosition] = useState('top-[80px]');
+    const [topPosition, setTopPosition] = useState(0);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -491,7 +491,7 @@ function DragAndDrop() {
                                         <div className='flex justify-end mb-2'>
                                             <IoMdCloseCircleOutline onClick={() => handleRemoveFile(file?.name, index)} className="text-lg text-red-600 duration-300 ease-in-out rounded-full cursor-pointer hover:scale-110" />
                                         </div>
-                                        <div className={`h-48 p-1 overflow-hidden border-2 rounded-md shadow-lg cursor-pointer border-slate-300 bg-slate-300 w-36 sm:w-44 sm:h-52 no-scrollbar ${previewData?.name === file?.name ? 'border-blue-600 border-2 shadow-xl' : ''}`}
+                                        <div className={`h-48 p-1 overflow-hidden border-2 rounded-md cursor-pointer  bg-slate-300 w-36 sm:w-44 sm:h-52 no-scrollbar ${previewData?.name === file?.name ? 'border-blue-600  shadow-xl' : 'border-slate-300  shadow-lg'}`}
                                             onClick={(e) => sideViewSetHandler(e, file)}
                                         >
 
