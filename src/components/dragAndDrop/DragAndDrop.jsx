@@ -33,6 +33,19 @@ function DragAndDrop() {
     const [sizeOfFile, setSizeOfFile] = useState(null)
     const [typeData, setTypeData] = useState([])
     const [loading, setLoading] = useState(false)
+    const [topPosition, setTopPosition] = useState('top-[80px]');
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setTopPosition(window.scrollY);
+        };
+
+        window.addEventListener("scroll", handleScroll);
+
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+        };
+    }, []);
 
     useEffect(() => {
         if (!employee?.name) {
@@ -423,6 +436,7 @@ function DragAndDrop() {
     return (
         <div className='relative w-full p-5 sm:p-10'>
             <Toaster position='top-center' richColors />
+
             <div className='flex justify-between'>
                 <div>
                     <p className='font-semibold text-gray-800 sm:text-lg lg:text-2xl'>{employee?.name}</p>
@@ -442,6 +456,9 @@ function DragAndDrop() {
                     </div>
                 }
             </div>
+
+
+
 
             {!fileUrl &&
                 <div className='w-full min-h-[65vh] flex items-start mt-10 justify-center'>
@@ -474,14 +491,29 @@ function DragAndDrop() {
                                         <div className='flex justify-end mb-2'>
                                             <IoMdCloseCircleOutline onClick={() => handleRemoveFile(file?.name, index)} className="text-lg text-red-600 duration-300 ease-in-out rounded-full cursor-pointer hover:scale-110" />
                                         </div>
-                                        <div className="h-48 px-1 py-1 overflow-hidden border rounded-md shadow-lg border-slate-300 bg-slate-300 w-36 sm:w-44 sm:h-52 no-scrollbar"
-                                            onMouseEnter={(e) => sideViewSetHandler(e, file)}
-                                            onMouseLeave={() => setPreviewData(null)}>
+                                        <div className={`h-48 p-1 overflow-hidden border-2 rounded-md shadow-lg cursor-pointer border-slate-300 bg-slate-300 w-36 sm:w-44 sm:h-52 no-scrollbar ${previewData?.name === file?.name ? 'border-blue-600 border-2 shadow-xl' : ''}`}
+                                            onClick={(e) => sideViewSetHandler(e, file)}
+                                        >
 
                                             {file?.preview?.type === 'image' ? (
                                                 <img src={file?.preview?.data} alt={file?.name} className="object-cover w-full h-full rounded-md" />
                                             ) : file?.preview?.type === 'pdf' ? (
-                                                <iframe src={`${file?.preview?.data}#toolbar=0&navpanes=0`} className="w-40 no-scrollbar" height="100%" title={file?.name}></iframe>
+                                                // <iframe src={`${file?.preview?.data}#toolbar=0&navpanes=0`} className="w-40 cursor-pointer no-scrollbar" height="100%" title={file?.name}></iframe>
+                                                <div className="relative w-40 cursor-pointer" style={{ height: "100%" }}>
+                                                    {/* Iframe Content */}
+                                                    <iframe
+                                                        src={`${file?.preview?.data}#toolbar=0&navpanes=0&scrollbar=0`}
+                                                        className="w-full h-full rounded-md"
+                                                        title={file?.name}
+                                                    ></iframe>
+
+                                                    {/* Transparent Overlay for Click Handling */}
+                                                    <div
+                                                        onClick={(e) => sideViewSetHandler(e, file)}
+                                                        className="absolute top-0 left-0 w-full h-full"
+                                                        style={{ backgroundColor: "transparent" }}
+                                                    ></div>
+                                                </div>
                                             ) : file?.preview?.type === 'table' ? (
                                                 <div className="h-full overflow-auto border rounded-md">
                                                     <table className="min-w-full text-xs text-left text-gray-600 bg-white ">
@@ -559,7 +591,7 @@ function DragAndDrop() {
                 </div>
             }
 
-            {previewData && <SidePreview previewData={previewData} isRight={isRight} unknownImage={unknownImage} />}
+            {previewData && <SidePreview previewData={previewData} isRight={isRight} unknownImage={unknownImage} topPosition={topPosition} onCloseClick={() => setPreviewData(null)} />}
         </div>
     );
 }

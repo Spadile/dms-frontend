@@ -14,6 +14,7 @@ function UploadFiles() {
             <div className='px-5 pt-2 sm:px-10'>
                 <Breadcrumbs paths={breadcrumbPaths} />
             </div>
+            <p className='px-5 pt-2 text-xs text-center text-red-700 xl:text-sm sm:px-10 '>"Only the following file formats are accepted: PDF, PNG, JPG, JPEG, WEBP, DOCX, XLSX, CSV, ODS, EML, and TXT. Please upload files in one of these formats."</p>
             <DragAndDrop />
         </div>
     )
