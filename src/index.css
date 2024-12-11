@@ -10,4 +10,35 @@
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
   }
+
+  .custom-scrollbar {
+    overflow-y: scroll;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .custom-scrollbar:hover {
+    scrollbar-color: #a5a4a4 #f1f1f1;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px; /* Adjust the width as needed */
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+    background: #a5a4a4;
+  }
+
+  .custom-scrollbar:hover::-webkit-scrollbar-thumb:hover {
+    background: #a5a4a4;
+  }
 }

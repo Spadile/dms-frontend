@@ -17,6 +17,7 @@ import { getFileTypeApi } from '../../api/adminApi';
 import { ALLOWED_DATA_EXTENSIONS } from '../../utils/constants';
 import SidePreview from './SidePreview';
 import { generatePreview } from '../../utils/generatePreview';
+import Dropdown from '../common/inputFields/DropDown';
 
 
 function DragAndDrop() {
@@ -421,7 +422,7 @@ function DragAndDrop() {
                                                     {/* Iframe Content */}
                                                     <iframe
                                                         src={`${file?.preview?.data}#toolbar=0&navpanes=0&scrollbar=0`}
-                                                        className="w-full h-full rounded-md"
+                                                        className="w-full h-full rounded-md "
                                                         title={file?.name}
                                                     ></iframe>
 
@@ -458,18 +459,23 @@ function DragAndDrop() {
                                         </div>
                                         <p className="px-3 py-1 text-xs truncate">{file?.name}</p>
 
-                                        <select
+                                        {/* <select
                                             value={selectedName[index]}
                                             onChange={(e) => handleRenameFile(file?.name, e.target.value)}
                                             className='px-2 py-1 mt-3 text-sm border rounded-sm w-36 sm:w-44 bg-blue-50'
                                         >
                                             <option key={index} value="">Select Document Type</option>
-
                                             {typeData?.map((value, index) => (
                                                 <option key={index} value={value?.name}>{value?.name}</option>)
                                             )}
 
-                                        </select>
+                                        </select> */}
+
+                                        <Dropdown
+                                            options={typeData}
+                                            selectedValue={selectedName[index]}
+                                            onChange={(value) => handleRenameFile(file?.name, value)}
+                                        />
 
                                     </div>
                                 ))}
