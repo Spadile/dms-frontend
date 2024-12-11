@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { throttle } from 'lodash';
 import { useDropzone } from 'react-dropzone';
 import GlobalButton from '../common/buttons/GlobalButton';
 import { IoMdCloseCircleOutline } from 'react-icons/io';
@@ -13,10 +14,9 @@ import Swal from 'sweetalert2';
 import axiosInstance from '../../utils/axiosInstance';
 import { convertToUnderscore, formatFileSize, formatFileSizeNumber } from '../../utils/functions';
 import { getFileTypeApi } from '../../api/adminApi';
-import * as XLSX from 'xlsx';
-import mammoth from 'mammoth';
 import { ALLOWED_DATA_EXTENSIONS } from '../../utils/constants';
 import SidePreview from './SidePreview';
+import { generatePreview } from '../../utils/generatePreview';
 
 
 function DragAndDrop() {
@@ -35,17 +35,21 @@ function DragAndDrop() {
     const [loading, setLoading] = useState(false)
     const [topPosition, setTopPosition] = useState(0);
 
-    useEffect(() => {
-        const handleScroll = () => {
+    const handleScroll = useCallback(
+        throttle(() => {
             setTopPosition(window.scrollY);
-        };
+        }, 200),
+        []
+    );
 
+    useEffect(() => {
+        // Attach the scroll event listener
         window.addEventListener("scroll", handleScroll);
-
+        // Cleanup on component unmount
         return () => {
             window.removeEventListener("scroll", handleScroll);
         };
-    }, []);
+    }, [handleScroll]);
 
     useEffect(() => {
         if (!employee?.name) {
@@ -58,17 +62,17 @@ function DragAndDrop() {
         if (files?.length > 0) {
             updateIsFileExist(true);
         } else {
+            setIsMergeActive(false)
             updateIsFileExist(false);
         }
-    }, [files, updateIsFileExist]);
-
-    useEffect(() => {
-        if (files?.length === 0) {
-            setIsMergeActive(false)
+        return () => {
+            files?.forEach((preview) => {
+                if (preview?.type === "image" || preview?.type === "pdf") {
+                    URL.revokeObjectURL(preview?.data);
+                }
+            });
         }
-        return () => files?.forEach((file) => URL.revokeObjectURL(file.preview));
-    }, [files]);
-
+    }, [files, updateIsFileExist]);
 
     const fetchFileTypes = async () => {
         try {
@@ -79,89 +83,6 @@ function DragAndDrop() {
         }
 
     }
-
-
-    const generatePreview = async (file) => {
-        if (file.type.startsWith('image/')) {
-            // Preview for images
-            return { type: 'image', data: URL.createObjectURL(file) };
-        } else if (file.type === 'application/pdf') {
-            // Preview for PDFs
-            return { type: 'pdf', data: URL.createObjectURL(file) };
-        } else if (
-            file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || // .xlsx
-            file.type === 'application/vnd.ms-excel' || // .xls
-            file.type === 'application/vnd.ms-excel.sheet.macroEnabled.12' || // .xlsm
-            file.type === 'application/vnd.oasis.opendocument.spreadsheet' || // .ods
-            file.type === 'text/csv'
-        ) {
-            // Parse Excel or CSV files
-            const data = await parseExcelOrCSV(file);
-            return { type: 'table', data }; // Return as table data
-        } else if (
-            file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || // .docx
-            file.type === 'application/msword' || // .doc
-            file.type === 'text/plain' // .txt
-        ) {
-            // Parse Word or text files
-            const data = await parseDocument(file);
-            return { type: 'text', data }; // Return as text content
-        } else {
-            // Fallback for unknown formats
-            return { type: 'unknown', data: unknownImage };
-        }
-    };
-
-
-    const parseExcelOrCSV = (file) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const binary = e.target.result;
-                const workbook = XLSX.read(binary, { type: 'binary' });
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-                const data = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // 2D array of data
-                resolve(data);
-            };
-            reader.onerror = () => reject(reader.error);
-            reader.readAsBinaryString(file);
-        });
-    };
-
-
-    const parseDocument = (file) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-
-            reader.onload = async (e) => {
-                const content = e.target.result;
-
-                // Check if the file is a .docx file
-                if (file?.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                    // Parse .docx files using Mammoth
-                    const { value } = await mammoth.extractRawText({ arrayBuffer: content });
-                    resolve(value); // Extracted text from the .docx file
-                } else if (file?.type === 'text/plain') {
-                    // For .txt files, read as text directly
-                    resolve(content); // Content is a string already
-                } else {
-                    // For other types (like .doc), you can handle them as needed
-                    resolve(content);
-                }
-            };
-
-            reader.onerror = () => reject(reader.error);
-
-            // Use readAsText for .txt files and readAsArrayBuffer for .docx files or other formats
-            if (file.type === 'text/plain') {
-                reader.readAsText(file); // Read text files as plain text
-            } else {
-                reader.readAsArrayBuffer(file); // Read .docx and other files as array buffers
-            }
-        });
-    };
-
 
     const onDrop = useCallback(async (acceptedFiles) => {
         const resolvedFiles = await Promise.all(
@@ -321,7 +242,6 @@ function DragAndDrop() {
         } finally {
             Swal.close()
         }
-
     }
 
     const compressFileHandler = async (fileUrl) => {
@@ -410,7 +330,7 @@ function DragAndDrop() {
             }
         } catch (error) {
             console.error('Error downloading the file:', error);
-            Swal.fire('Error!', 'Failed to download the file.', 'error');
+            Swal.fire('Error!', 'Failed to download the file.', error);
         } finally {
             setLoading(false);
         }
@@ -456,8 +376,6 @@ function DragAndDrop() {
                     </div>
                 }
             </div>
-
-
 
 
             {!fileUrl &&

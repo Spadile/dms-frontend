@@ -5,7 +5,7 @@ function SidePreview({ previewData, isRight, unknownImage, topPosition, onCloseC
 
     return (
         <div
-            className={`${isRight ? 'left-0' : 'right-0'} ${topPosition < 80 ? 'top-20 max-h-[90vh]' : 'top-0 max-h-screen'} group z-[100] fixed  hidden lg:inline-block py-2 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md w-[35vw] h-full no-scrollbar`}
+            className={`${isRight ? 'left-0' : 'right-0'} ${topPosition < 80 ? 'top-20 max-h-[90vh]' : 'top-0 max-h-screen'} group z-[100] fixed  hidden lg:inline-block py-2 overflow-hidden bg-gray-200 border border-gray-300 rounded-md shadow-md w-[35vw] h-full overflow-y-auto  no-scrollbar`}
         >
             <div className='absolute top-0 justify-end hidden w-full px-5 py-3 transition-transform bg-opacity-60 bg-slate-800 group-hover:flex'>
                 <MdClose className='text-2xl text-white cursor-pointer hover:scale-110' onClick={onCloseClick} />
@@ -25,12 +25,12 @@ function SidePreview({ previewData, isRight, unknownImage, topPosition, onCloseC
                 ></iframe>
             ) : previewData?.preview?.type === 'table' ? (
                 <div className="max-h-full overflow-auto bg-white border rounded-md">
-                    <table className="min-w-full text-sm text-left text-gray-500">
+                    <table className="min-w-full text-sm text-left text-gray-700">
                         <tbody>
                             {previewData?.preview?.data?.map((row, rowIndex) => (
                                 <tr key={rowIndex}>
                                     {row.map((cell, cellIndex) => (
-                                        <td key={cellIndex} className="px-2 py-1 border">
+                                        <td key={cellIndex} className="px-2 py-1 border border-gray-300">
                                             {cell}
                                         </td>
                                     ))}
@@ -45,7 +45,7 @@ function SidePreview({ previewData, isRight, unknownImage, topPosition, onCloseC
                 </pre>
             ) : (
                 <div className="p-4 text-center">
-                    <p className="text-gray-500">Unsupported file type</p>
+                    <p className="text-gray-600">Unsupported file type</p>
                     <img
                         src={unknownImage} // Placeholder for unsupported file types
                         alt="Unsupported"
