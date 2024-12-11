@@ -23,7 +23,7 @@ function Navbar() {
     }
 
     return (
-        <div className='flex items-center justify-between w-full px-5 sm:px-10 bg-dmsBlue min-h-20 '>
+        <div className='z-10 flex items-center justify-between w-full px-5 sm:px-10 bg-dmsBlue min-h-20 '>
             <div>
                 <img src={logo} alt='daman logo' className='w-auto h-8 cursor-pointer sm:h-14' onClick={onLogoClick} />
             </div>
