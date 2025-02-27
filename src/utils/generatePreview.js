@@ -34,6 +34,7 @@ export const generatePreview = async (file) => {
       "application/vnd.ms-excel", // .xls
       "application/vnd.ms-excel.sheet.macroEnabled.12", // .xlsm
       "application/vnd.oasis.opendocument.spreadsheet", // .ods
+      "application/vnd.oasis.opendocument.text", // .odt (Added)
       "text/csv",
     ].includes(fileType)
   ) {
@@ -45,6 +46,8 @@ export const generatePreview = async (file) => {
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
       "application/msword", // .doc
       "text/plain", // .txt
+      // "application/vnd.oasis.opendocument.text", // .odt (Added)
+      "application/msword.template.macroEnabled.12", // .dots (Added)
     ].includes(fileType)
   ) {
     return { type: "text", data: await parseDocument(file) };

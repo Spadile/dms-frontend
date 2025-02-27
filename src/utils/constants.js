@@ -13,7 +13,6 @@ export const ALLOWED_DATA_EXTENSIONS = [
   "ods",
   "eml",
   "txt",
-  // New types,
   "dot",
   "dotx",
   "docm",
@@ -23,4 +22,6 @@ export const ALLOWED_DATA_EXTENSIONS = [
   "msg",
   "mbox",
   "pst",
+  "odt",
+  "dots",
 ];
