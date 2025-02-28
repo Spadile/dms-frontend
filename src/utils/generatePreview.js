@@ -13,7 +13,6 @@ import { XMLParser } from "fast-xml-parser";
 export const generatePreview = async (file) => {
   const fileName = file.name.toLowerCase();
   const fileType = file.type || ""; // Ensure file.type is always defined
-
   // Image files
   if (fileType.startsWith("image/") || fileType === "application/pdf") {
     return {
@@ -22,7 +21,18 @@ export const generatePreview = async (file) => {
     };
   }
   // Special document formats (dot, dotx, docm, dotm)
-  if (fileName.endsWith(".dot")) return { type: "unknown", data: dot };
+  if (fileName.endsWith(".dot")) return { type: "image", data: dot };
+
+  // Email formats
+  if ([".eml", ".msg", ".mbox", ".pst"].some((ext) => fileName.endsWith(ext))) {
+    return {
+      type: "image",
+      data: { ".eml": eml, ".msg": msg, ".mbox": mbox, ".pst": pst }[
+        fileName.slice(-4)
+      ],
+    };
+  }
+
   if ([".dotx", ".docm", ".dotm"].some((ext) => fileName.endsWith(ext))) {
     const parsedData = await parseSpclDocument(file);
     return { type: "text", data: convertWordXmlToPlainText(parsedData) };
@@ -52,17 +62,9 @@ export const generatePreview = async (file) => {
   ) {
     return { type: "text", data: await parseDocument(file) };
   }
-  // Email formats
-  if ([".eml", ".msg", ".mbox", ".pst"].some((ext) => fileName.endsWith(ext))) {
-    return {
-      type: "email",
-      data: { ".eml": eml, ".msg": msg, ".mbox": mbox, ".pst": pst }[
-        fileName.slice(-4)
-      ],
-    };
-  }
+
   // Default case: Unknown file type
-  return { type: "unknown", data: unknownImage };
+  return { type: "image", data: unknownImage };
 };
 
 const parseExcelOrCSV = (file) => {

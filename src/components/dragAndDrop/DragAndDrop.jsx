@@ -11,7 +11,7 @@ import { compressFilesApi, getFileSize, mergeFilesApi } from '../../api/mainAPi'
 import { toast, Toaster } from 'sonner';
 import Swal from 'sweetalert2';
 import axiosInstance from '../../utils/axiosInstance';
-import { convertToUnderscore, formatFileSize, formatFileSizeNumber } from '../../utils/functions';
+import { convertToUnderscore, formatFileSize, formatFileSizeNumber, renameFiles } from '../../utils/functions';
 import { getFileTypeApi } from '../../api/adminApi';
 import { ALLOWED_DATA_EXTENSIONS } from '../../utils/constants';
 import SidePreview from './SidePreview';
@@ -78,6 +78,7 @@ function DragAndDrop() {
         }
     }, [files, updateIsFileExist]);
 
+
     const onDragEnd = (event) => {
         if (isRemoving || isMergeActive || files?.length <= 1) return;
 
@@ -89,17 +90,16 @@ function DragAndDrop() {
         const newIndex = files.findIndex((file) => file.name === over.id);
 
         if (oldIndex !== -1 && newIndex !== -1) {
-            setFiles((prevFiles) => {
-                const updatedFiles = arrayMove(prevFiles, oldIndex, newIndex);
-                return updatedFiles;
-            });
-
+            const updatedFiles = arrayMove(files, oldIndex, newIndex);
+            const renamed = renameFiles(updatedFiles)
+            setFiles(renamed);
             setSelectedName((prevNames) => {
                 const updatedNames = arrayMove(prevNames, oldIndex, newIndex);
                 return updatedNames;
             });
         }
     };
+
 
 
     const fetchFileTypes = async () => {
@@ -112,20 +112,6 @@ function DragAndDrop() {
 
     }
 
-    // const onDrop = useCallback(async (acceptedFiles) => {
-    //     const resolvedFiles = await Promise.all(
-    //         acceptedFiles?.map(async (file) =>
-    //             Object.assign(file, {
-    //                 preview: await generatePreview(file),
-    //             })
-    //         )
-    //     );
-    //     console.log(resolvedFiles)
-    //     if (isFileAllowed(resolvedFiles)) {
-    //         setFiles(resolvedFiles); // Set resolved files in the state
-    //     }
-    // }, []);
-
 
     const onDrop = useCallback(async (acceptedFiles) => {
         setIsRemoving(true);
@@ -135,7 +121,7 @@ function DragAndDrop() {
                 const fileExtension = file.name.split('.').pop(); // Extract extension
                 const fileBaseName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension from name
 
-                const renamedFileName = `${i + 1}_${fileBaseName}_${employee?.name}_.${fileExtension}`;
+                const renamedFileName = `${i + 1}_${fileBaseName}_${employee?.name}.${fileExtension}`;
 
                 // Create a new File object with the renamed filename
                 const renamedFile = new File([file], renamedFileName, {
@@ -173,58 +159,34 @@ function DragAndDrop() {
     }, [employee?.name]);
 
 
-
-
-
     const { getRootProps, getInputProps, isDragActive, open } = useDropzone({ onDrop, noClick: true });
-
-    // 
-    // const handleManualUpload = async (event) => {
-    //     console.log(event)
-    //     const selectedFilesPromises = Array.from(event.target.files)?.map(async (file) => {
-    //         return Object.assign(file, {
-    //             preview: await generatePreview(file),
-    //         });
-    //     });
-
-    //     const resolvedFiles = await Promise.all(selectedFilesPromises); // Resolve all promises 
-
-    //     console.log(resolvedFiles)
-
-    //     if (isFileAllowed(resolvedFiles)) {
-    //         setFiles((prevFiles) => [...prevFiles, ...resolvedFiles]); // Update state with resolved files
-    //     }
-    //     setIsMergeActive(false);
-    // };
 
 
     const handleManualUpload = async (event) => {
-        console.log(event);
 
         setIsRemoving(true);
 
-        const existingFileCount = files.length; // Get the current number of files
+        const existingFileCount = files?.length; // Get the current number of files
 
         const selectedFilesPromises = Array.from(event.target.files)?.map(async (file, i) => {
-            const fileExtension = file.name.split('.').pop(); // Extract extension
-            const fileBaseName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension from name
+            const fileExtension = file?.name.split('.').pop(); // Extract extension
+            const fileBaseName = file?.name.replace(/\.[^/.]+$/, ""); // Remove extension from name
 
             // Start numbering from the existing file count + 1
-            const renamedFileName = `${existingFileCount + i + 1}_${fileBaseName}_${employee?.name}_.${fileExtension}`;
+            const renamedFileName = `${existingFileCount + i + 1}_${fileBaseName}_${employee?.name}.${fileExtension}`;
 
             // Create a new File object with the renamed filename
             const renamedFile = new File([file], renamedFileName, {
-                type: file.type,
+                type: file?.type,
                 lastModified: file.lastModified,
             });
-
             // Generate a preview of the file
             const preview = await generatePreview(renamedFile);
-
+            event.target.value = null;
             return {
                 ...renamedFile,
                 preview,
-                path: file.path ?? `./${renamedFileName}`,
+                path: file?.path ?? `./${renamedFileName}`,
                 relativePath: file.relativePath ?? `./${renamedFileName}`,
                 lastModified: file.lastModified,
                 lastModifiedDate: new Date(file.lastModified),
@@ -235,9 +197,7 @@ function DragAndDrop() {
         });
 
         const resolvedFiles = await Promise.all(selectedFilesPromises); // Resolve all promises
-
-        console.log(resolvedFiles);
-
+        console.log(resolvedFiles)
         if (isFileAllowed(resolvedFiles)) {
             setFiles((prevFiles) => [...prevFiles, ...resolvedFiles]); // Append new files with updated names
         }
@@ -248,8 +208,6 @@ function DragAndDrop() {
 
         setIsMergeActive(false);
     };
-
-
 
 
     const isFileAllowed = (fileData) => {
@@ -266,7 +224,10 @@ function DragAndDrop() {
     const handleRemoveFile = (fileName, i) => {
         setIsRemoving(true);  // Set the flag before removing
         // Your remove logic here...
-        setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
+        const filesAfterRemoval = files?.filter((file) => file.name !== fileName)
+        const renamedFileData = renameFiles(filesAfterRemoval)
+        // setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
+        setFiles(renamedFileData)
         setSelectedName((prev) => prev.filter((_, index) => index !== i));
         setTimeout(() => {
             setIsRemoving(false);  // Reset after operation
@@ -287,19 +248,13 @@ function DragAndDrop() {
                     // If the new name does not have an extension, add the original extension
                     const renamedFileName = newName?.endsWith(`.${fileExtension}`)
                         ? newName
-                        : `${i + 1}_${newName}_${employee?.name}_.${fileExtension}`;
+                        : `${i + 1}_${newName}_${employee?.name}.${fileExtension}`;
 
                     // Create a new File object while preserving all native properties (type, lastModified)
                     const renamedFile = new File([file], renamedFileName, {
                         type: file.type,
                         lastModified: file.lastModified,
                     });
-
-                    // Await the preview generation before assigning it
-                    const preview = await generatePreview(renamedFile);
-                    renamedFile.preview = preview;
-                    renamedFile.path = file.path;
-                    renamedFile.relativePath = file.relativePath;
 
                     // for name view in dropdown
                     setSelectedName((prev) => {
@@ -308,7 +263,18 @@ function DragAndDrop() {
                         return newArr;
                     });
 
-                    return renamedFile; // Return the new File object with the new name and preserved properties
+                    // return renamedFile;
+                    return {
+                        ...renamedFile, // Spread original File properties
+                        preview: file.preview, // Preserve preview if available
+                        path: file.path ?? `./${renamedFileName}`, // Default path if missing
+                        relativePath: file.relativePath ?? `./${renamedFileName}`, // Default relative path if missing
+                        lastModified: file.lastModified,
+                        lastModifiedDate: new Date(file.lastModified),
+                        size: file.size,
+                        type: file.type,
+                        name: renamedFileName, // Ensure new name is correctly assigned
+                    };
                 }
                 return file; // No changes to other files
             })
@@ -433,9 +399,9 @@ function DragAndDrop() {
         const isCloserToRight = boxRect.right > screenWidth / 2;
 
         setIsRight(isCloserToRight)
-
-        const preview = await generatePreview(file);
-        setPreviewData({ name: file.name, type: file.type, preview: preview })
+        console.log(file)
+        // const preview = await generatePreview(file);
+        setPreviewData({ name: file.name, type: file.type, preview: file?.preview })
     }
 
 
@@ -483,8 +449,6 @@ function DragAndDrop() {
         }
 
     };
-
-
 
 
     const getFileNameFromUrl = (url) => {
