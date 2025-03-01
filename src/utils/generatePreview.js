@@ -6,6 +6,7 @@ import mbox from "../assets/other/mbox.png";
 import msg from "../assets/other/msg.png";
 import pst from "../assets/other/pst.png";
 import dot from "../assets/other/dot.png";
+import odt from "../assets/other/odt.png";
 
 import JSZip from "jszip";
 import { XMLParser } from "fast-xml-parser";
@@ -24,12 +25,24 @@ export const generatePreview = async (file) => {
   if (fileName.endsWith(".dot")) return { type: "image", data: dot };
 
   // Email formats
-  if ([".eml", ".msg", ".mbox", ".pst"].some((ext) => fileName.endsWith(ext))) {
+  if (
+    [".eml", ".msg", ".mbox", ".pst", ".odt"].some((ext) =>
+      fileName.endsWith(ext)
+    )
+  ) {
+    // Extract the file extension correctly
+    const ext = fileName.slice(fileName.lastIndexOf(".")).toLowerCase();
+
     return {
       type: "image",
-      data: { ".eml": eml, ".msg": msg, ".mbox": mbox, ".pst": pst }[
-        fileName.slice(-4)
-      ],
+      data:
+        {
+          ".eml": eml,
+          ".msg": msg,
+          ".mbox": mbox,
+          ".pst": pst,
+          ".odt": odt,
+        }[ext] || null, // Default to null if extension is not found
     };
   }
 
@@ -44,7 +57,7 @@ export const generatePreview = async (file) => {
       "application/vnd.ms-excel", // .xls
       "application/vnd.ms-excel.sheet.macroEnabled.12", // .xlsm
       "application/vnd.oasis.opendocument.spreadsheet", // .ods
-      "application/vnd.oasis.opendocument.text", // .odt (Added)
+      // "application/vnd.oasis.opendocument.text", // .odt (Added)
       "text/csv",
     ].includes(fileType)
   ) {

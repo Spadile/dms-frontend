@@ -11,7 +11,7 @@ import { compressFilesApi, getFileSize, mergeFilesApi } from '../../api/mainAPi'
 import { toast, Toaster } from 'sonner';
 import Swal from 'sweetalert2';
 import axiosInstance from '../../utils/axiosInstance';
-import { convertToUnderscore, formatFileSize, formatFileSizeNumber, renameFiles } from '../../utils/functions';
+import { convertToUnderscore, formatFileSize, formatFileSizeNumber } from '../../utils/functions';
 import { getFileTypeApi } from '../../api/adminApi';
 import { ALLOWED_DATA_EXTENSIONS } from '../../utils/constants';
 import SidePreview from './SidePreview';
@@ -79,26 +79,73 @@ function DragAndDrop() {
     }, [files, updateIsFileExist]);
 
 
-    const onDragEnd = (event) => {
+    const onDragEnd = async (event) => {
         if (isRemoving || isMergeActive || files?.length <= 1) return;
 
         const { active, over } = event;
         if (!active || !over || active.id === over.id) return;
 
-        // Find the indexes of the dragged and target files
+        // Find indexes of dragged file and target position
         const oldIndex = files.findIndex((file) => file.name === active.id);
         const newIndex = files.findIndex((file) => file.name === over.id);
 
         if (oldIndex !== -1 && newIndex !== -1) {
+            // Move file within the array
             const updatedFiles = arrayMove(files, oldIndex, newIndex);
-            const renamed = renameFiles(updatedFiles)
-            setFiles(renamed);
+
+            // Rename files based on new order
+            const renamedFiles = await renameFiles(updatedFiles);
+
+            setFiles(renamedFiles);
+
+            // Reorder and update selected names dropdown
             setSelectedName((prevNames) => {
-                const updatedNames = arrayMove(prevNames, oldIndex, newIndex);
-                return updatedNames;
+                return arrayMove(prevNames, oldIndex, newIndex);
             });
         }
     };
+
+    // Helper function to rename files after reordering
+    const renameFiles = async (files) => {
+        return Promise.all(
+            files?.map(async (file, index) => {
+                const fileExtension = file.name.split(".").pop() || "";
+                let baseName = file.name.replace(`.${fileExtension}`, "").replace(/\.$/, "");
+
+                // Update numbering in filename
+                baseName = baseName.replace(/^(\d+)_/, `${index + 1}_`);
+
+                const renamedFileName = `${baseName}.${fileExtension}`;
+
+                // Ensure `file` is an instance of `File`
+                let fileContent;
+                if (file instanceof File) {
+                    fileContent = await file.arrayBuffer();
+                } else if (file.originalFile instanceof File) {
+                    fileContent = await file.originalFile.arrayBuffer();
+                } else {
+                    console.error("Invalid file format:", file);
+                    return file; // Return the original file if not valid
+                }
+
+                // Create a new File object while preserving type and lastModified
+                const renamedFile = new File([fileContent], renamedFileName, {
+                    type: file.type,
+                    lastModified: file.lastModified,
+                });
+
+                return {
+                    ...file, // Preserve existing properties
+                    ...renamedFile, // Use the new renamed file object properly
+                    preview: file.preview, // Keep the preview intact
+                    path: `./${renamedFileName}`, // Update path with new name
+                    relativePath: `./${renamedFileName}`, // Update relative path
+                    name: renamedFileName, // Ensure new name is used
+                };
+            })
+        );
+    };
+
 
 
 
@@ -112,29 +159,42 @@ function DragAndDrop() {
 
     }
 
+    // const onDrop = useCallback(async (acceptedFiles) => {
+    //     const resolvedFiles = await Promise.all(
+    //         acceptedFiles?.map(async (file) =>
+    //             Object.assign(file, {
+    //                 preview: await generatePreview(file),
+    //             })
+    //         )
+    //     );
+    //     if (isFileAllowed(resolvedFiles)) {
+    //         setFiles(resolvedFiles); // Set resolved files in the state
+    //     }
+    // }, []);
+
 
     const onDrop = useCallback(async (acceptedFiles) => {
         setIsRemoving(true);
 
         const resolvedFiles = await Promise.all(
-            acceptedFiles.map(async (file, i) => {
+            acceptedFiles?.map(async (file, i) => {
                 const fileExtension = file.name.split('.').pop(); // Extract extension
                 const fileBaseName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension from name
 
                 const renamedFileName = `${i + 1}_${fileBaseName}_${employee?.name}.${fileExtension}`;
 
-                // Create a new File object with the renamed filename
-                const renamedFile = new File([file], renamedFileName, {
+                // Convert to ArrayBuffer for correct binary handling
+                const fileContent = await file.arrayBuffer();
+                const renamedFile = new File([fileContent], renamedFileName, {
                     type: file.type,
                     lastModified: file.lastModified,
                 });
 
-                // Generate a preview of the file
                 const preview = await generatePreview(renamedFile);
 
-                // Structure the output to match your expected format
                 return {
-                    ...renamedFile,
+                    originalFile: file, // Keep a reference to the original file
+                    renamedFile, // Store the new renamed File object
                     preview,
                     path: file.path ?? `./${renamedFileName}`,
                     relativePath: file.relativePath ?? `./${renamedFileName}`,
@@ -163,30 +223,32 @@ function DragAndDrop() {
 
 
     const handleManualUpload = async (event) => {
-
         setIsRemoving(true);
 
-        const existingFileCount = files?.length; // Get the current number of files
+        const existingFileCount = files?.length || 0; // Get the current number of files safely
 
         const selectedFilesPromises = Array.from(event.target.files)?.map(async (file, i) => {
-            const fileExtension = file?.name.split('.').pop(); // Extract extension
-            const fileBaseName = file?.name.replace(/\.[^/.]+$/, ""); // Remove extension from name
+            const fileExtension = file.name.split('.').pop(); // Extract extension
+            const fileBaseName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension from name
 
             // Start numbering from the existing file count + 1
             const renamedFileName = `${existingFileCount + i + 1}_${fileBaseName}_${employee?.name}.${fileExtension}`;
 
-            // Create a new File object with the renamed filename
-            const renamedFile = new File([file], renamedFileName, {
-                type: file?.type,
+            // Convert to ArrayBuffer for binary handling
+            const fileContent = await file.arrayBuffer();
+            const renamedFile = new File([fileContent], renamedFileName, {
+                type: file.type,
                 lastModified: file.lastModified,
             });
-            // Generate a preview of the file
+
+            // Generate a preview of the renamed file
             const preview = await generatePreview(renamedFile);
-            event.target.value = null;
+
             return {
-                ...renamedFile,
+                originalFile: file, // Store original file for reference
+                renamedFile, // Store the new renamed file object
                 preview,
-                path: file?.path ?? `./${renamedFileName}`,
+                path: file.path ?? `./${renamedFileName}`,
                 relativePath: file.relativePath ?? `./${renamedFileName}`,
                 lastModified: file.lastModified,
                 lastModifiedDate: new Date(file.lastModified),
@@ -196,10 +258,12 @@ function DragAndDrop() {
             };
         });
 
-        const resolvedFiles = await Promise.all(selectedFilesPromises); // Resolve all promises
-        console.log(resolvedFiles)
+        const resolvedFiles = await Promise.all(selectedFilesPromises); // Resolve all file promises
+
+        event.target.value = null; // Reset input field
+
         if (isFileAllowed(resolvedFiles)) {
-            setFiles((prevFiles) => [...prevFiles, ...resolvedFiles]); // Append new files with updated names
+            setFiles((prevFiles) => [...prevFiles, ...resolvedFiles]); // Append new files to state
         }
 
         setTimeout(() => {
@@ -221,101 +285,151 @@ function DragAndDrop() {
         return true;
     };
 
-    const handleRemoveFile = (fileName, i) => {
-        setIsRemoving(true);  // Set the flag before removing
-        // Your remove logic here...
-        const filesAfterRemoval = files?.filter((file) => file.name !== fileName)
-        const renamedFileData = renameFiles(filesAfterRemoval)
-        // setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
-        setFiles(renamedFileData)
+    const handleRemoveFile = async (fileName, i) => {
+        setIsRemoving(true);
+
+        // Filter out the removed file
+        const filesAfterRemoval = files?.filter((file) => file.name !== fileName);
+
+        // Resolve renamed files
+        const renamedFileData = await renameFiles(filesAfterRemoval);
+        setFiles(renamedFileData);
+
+        // Update selected names dropdown
         setSelectedName((prev) => prev.filter((_, index) => index !== i));
+
         setTimeout(() => {
-            setIsRemoving(false);  // Reset after operation
+            setIsRemoving(false);
         }, 2000);
     };
 
 
+
     const handleRenameFile = async (fileName, newName) => {
-        // Use a Promise.all to handle all the asynchronous renaming
         setIsRemoving(true);
 
         const updatedFiles = await Promise.all(
             files?.map(async (file, i) => {
-                if (file.name === fileName) {
+                if (file?.name === fileName) {
                     // Get the file extension
-                    const fileExtension = file?.name?.split('.').pop();
+                    const fileExtension = file?.name.split('.').pop();
+                    const fileBaseName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
 
-                    // If the new name does not have an extension, add the original extension
+                    // Ensure the new name has the correct extension
                     const renamedFileName = newName?.endsWith(`.${fileExtension}`)
                         ? newName
                         : `${i + 1}_${newName}_${employee?.name}.${fileExtension}`;
 
-                    // Create a new File object while preserving all native properties (type, lastModified)
-                    const renamedFile = new File([file], renamedFileName, {
+                    // Extract content safely
+                    let fileContent;
+                    if (file instanceof File) {
+                        fileContent = await file.arrayBuffer();
+                    } else if (file.originalFile instanceof File) {
+                        fileContent = await file.originalFile.arrayBuffer();
+                    } else {
+                        console.error("Invalid file format:", file);
+                        return file; // Return original if not valid
+                    }
+
+                    // Create a new renamed File object
+                    const renamedFile = new File([fileContent], renamedFileName, {
                         type: file.type,
                         lastModified: file.lastModified,
                     });
 
-                    // for name view in dropdown
+                    // Update the dropdown-selected name
                     setSelectedName((prev) => {
                         const newArr = [...prev];
                         newArr[i] = newName; // Replace value at index i
                         return newArr;
                     });
 
-                    // return renamedFile;
                     return {
-                        ...renamedFile, // Spread original File properties
-                        preview: file.preview, // Preserve preview if available
-                        path: file.path ?? `./${renamedFileName}`, // Default path if missing
-                        relativePath: file.relativePath ?? `./${renamedFileName}`, // Default relative path if missing
-                        lastModified: file.lastModified,
-                        lastModifiedDate: new Date(file.lastModified),
-                        size: file.size,
-                        type: file.type,
-                        name: renamedFileName, // Ensure new name is correctly assigned
+                        ...file, // Preserve other properties
+                        ...renamedFile, // Overwrite properties with the new File object
+                        preview: file.preview, // Preserve preview
+                        path: `./${renamedFileName}`,
+                        relativePath: `./${renamedFileName}`,
+                        name: renamedFileName, // Ensure the correct name is set
                     };
                 }
-                return file; // No changes to other files
+                return file; // Return unchanged files
             })
         );
 
-        // Once all promises are resolved, update the state
         setFiles(updatedFiles);
+
         setTimeout(() => {
-            setIsRemoving(false);  // Reset after operation
+            setIsRemoving(false);
         }, 2000);
     };
+
+
+
+
+
+    // const handleDownloadZip = async () => {
+    //     if (!files || files.length === 0) {
+    //         console.error("No files to download");
+    //         return;
+    //     }
+    //     console.log(files)
+    //     const zip = new JSZip();
+
+    //     for (const file of files) {
+    //         if (file instanceof File) {
+    //             try {
+    //                 // Use file.slice() to create a Blob with the same content and MIME type
+    //                 const fileContent = file.slice(0, file.size); // Slice the entire content
+    //                 const blob = new Blob([fileContent], { type: file.type });
+
+    //                 // Add the renamed file to the zip, using the updated name and original type
+    //                 zip.file(file.name, blob);
+    //             } catch (error) {
+    //                 console.error(`Error processing file ${file.name}:`, error);
+    //             }
+    //         } else {
+    //             console.error(`Invalid file: ${file}`);
+    //         }
+    //     }
+
+    //     // Generate and download the zip file
+    //     const content = await zip.generateAsync({ type: 'blob' });
+    //     saveAs(content, 'uploaded-files.zip');
+    //     setIsMergeActive(true)
+    // };
+
 
     const handleDownloadZip = async () => {
         if (!files || files.length === 0) {
             console.error("No files to download");
             return;
         }
+
+        console.log(files);
         const zip = new JSZip();
 
-        for (const file of files) {
-            if (file instanceof File) {
-                try {
-                    // Use file.slice() to create a Blob with the same content and MIME type
-                    const fileContent = file.slice(0, file.size); // Slice the entire content
-                    const blob = new Blob([fileContent], { type: file.type });
-
-                    // Add the renamed file to the zip, using the updated name and original type
-                    zip.file(file.name, blob);
-                } catch (error) {
-                    console.error(`Error processing file ${file.name}:`, error);
+        for (const fileObj of files) {
+            try {
+                const file = fileObj.renamedFile || fileObj.originalFile; // Use the renamed file if available
+                if (file instanceof File) {
+                    const fileContent = await file.arrayBuffer(); // Ensure binary integrity
+                    zip.file(fileObj.name, fileContent, { binary: true });
+                } else {
+                    console.error(`Invalid file: ${file}`);
                 }
-            } else {
-                console.error(`Invalid file: ${file}`);
+            } catch (error) {
+                console.error(`Error processing file ${fileObj.name}:`, error);
             }
         }
 
         // Generate and download the zip file
-        const content = await zip.generateAsync({ type: 'blob' });
-        saveAs(content, 'uploaded-files.zip');
-        setIsMergeActive(true)
+        const content = await zip.generateAsync({ type: "blob" });
+        saveAs(content, "uploaded-files.zip");
+        setIsMergeActive(true);
     };
+
+
 
 
     const convertAndMergeHandler = async () => {
