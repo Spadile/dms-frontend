@@ -7,7 +7,7 @@ import unknownImage from '../../assets/other/documents.png'
 
 
 
-function SortableItem({ file, index, handleRemoveFile, sideViewSetHandler, handleRenameFile, selectedName, typeData, previewData, isOpen, setIsOpen }) {
+function SortableItem({ file, index, handleRemoveFile, sideViewSetHandler, handleRenameFile, selectedName, typeData, previewData }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: file?.name });
 
     const style = {
@@ -84,9 +84,6 @@ function SortableItem({ file, index, handleRemoveFile, sideViewSetHandler, handl
                 options={typeData}
                 selectedValue={selectedName[index]}
                 onChange={(value) => handleRenameFile(file?.name, value)}
-                isOpen={isOpen}
-                setIsOpen={setIsOpen}
-                index={index}
             />
         </div>
     );

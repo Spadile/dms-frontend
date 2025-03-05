@@ -11,7 +11,7 @@ import { compressFilesApi, getFileSize, mergeFilesApi } from '../../api/mainAPi'
 import { toast, Toaster } from 'sonner';
 import Swal from 'sweetalert2';
 import axiosInstance from '../../utils/axiosInstance';
-import { convertToUnderscore, formatFileSize, formatFileSizeNumber } from '../../utils/functions';
+import { convertToUnderscore, formatFileSize, formatFileSizeNumber, renameFiles } from '../../utils/functions';
 import { getFileTypeApi } from '../../api/adminApi';
 import { ALLOWED_DATA_EXTENSIONS } from '../../utils/constants';
 import SidePreview from './SidePreview';
@@ -29,7 +29,6 @@ function DragAndDrop() {
     const isFileExist = useStore((state) => state.isFileExist);
     const updateIsFileExist = useStore((state) => state.updateIsFileExist);
 
-    const [isOpen, setIsOpen] = useState(false);
     const [files, setFiles] = useState([]);
     const [selectedName, setSelectedName] = useState([]);
     const [previewData, setPreviewData] = useState(null)
@@ -105,72 +104,23 @@ function DragAndDrop() {
         }
     };
 
-    // Helper function to rename files after reordering
-    const renameFiles = async (files) => {
-        return Promise.all(
-            files?.map(async (file, index) => {
-                const fileExtension = file.name.split(".").pop() || "";
-                let baseName = file.name.replace(`.${fileExtension}`, "").replace(/\.$/, "");
-
-                // Update numbering in filename
-                baseName = baseName.replace(/^(\d+)_/, `${index + 1}_`);
-
-                const renamedFileName = `${baseName}.${fileExtension}`;
-
-                // Ensure `file` is an instance of `File`
-                let fileContent;
-                if (file instanceof File) {
-                    fileContent = await file.arrayBuffer();
-                } else if (file.originalFile instanceof File) {
-                    fileContent = await file.originalFile.arrayBuffer();
-                } else {
-                    console.error("Invalid file format:", file);
-                    return file; // Return the original file if not valid
-                }
-
-                // Create a new File object while preserving type and lastModified
-                const renamedFile = new File([fileContent], renamedFileName, {
-                    type: file.type,
-                    lastModified: file.lastModified,
-                });
-
-                return {
-                    ...file, // Preserve existing properties
-                    ...renamedFile, // Use the new renamed file object properly
-                    preview: file.preview, // Keep the preview intact
-                    path: `./${renamedFileName}`, // Update path with new name
-                    relativePath: `./${renamedFileName}`, // Update relative path
-                    name: renamedFileName, // Ensure new name is used
-                };
-            })
-        );
-    };
-
 
 
 
     const fetchFileTypes = async () => {
         try {
-            const types = await getFileTypeApi()
-            setTypeData(types?.document_types)
+            const { document_types } = await getFileTypeApi()
+            const formattedData = document_types?.map(item => ({
+                id: item.id,
+                value: item.name,
+                label: item.name
+            }));
+            setTypeData(formattedData || [])
         } catch (error) {
             console.log(error.message)
         }
 
     }
-
-    // const onDrop = useCallback(async (acceptedFiles) => {
-    //     const resolvedFiles = await Promise.all(
-    //         acceptedFiles?.map(async (file) =>
-    //             Object.assign(file, {
-    //                 preview: await generatePreview(file),
-    //             })
-    //         )
-    //     );
-    //     if (isFileAllowed(resolvedFiles)) {
-    //         setFiles(resolvedFiles); // Set resolved files in the state
-    //     }
-    // }, []);
 
 
     const onDrop = useCallback(async (acceptedFiles) => {
@@ -206,8 +156,6 @@ function DragAndDrop() {
                 };
             })
         );
-
-        console.log(resolvedFiles);
 
         if (isFileAllowed(resolvedFiles)) {
             setFiles(resolvedFiles);
@@ -366,47 +314,11 @@ function DragAndDrop() {
 
 
 
-
-
-    // const handleDownloadZip = async () => {
-    //     if (!files || files.length === 0) {
-    //         console.error("No files to download");
-    //         return;
-    //     }
-    //     console.log(files)
-    //     const zip = new JSZip();
-
-    //     for (const file of files) {
-    //         if (file instanceof File) {
-    //             try {
-    //                 // Use file.slice() to create a Blob with the same content and MIME type
-    //                 const fileContent = file.slice(0, file.size); // Slice the entire content
-    //                 const blob = new Blob([fileContent], { type: file.type });
-
-    //                 // Add the renamed file to the zip, using the updated name and original type
-    //                 zip.file(file.name, blob);
-    //             } catch (error) {
-    //                 console.error(`Error processing file ${file.name}:`, error);
-    //             }
-    //         } else {
-    //             console.error(`Invalid file: ${file}`);
-    //         }
-    //     }
-
-    //     // Generate and download the zip file
-    //     const content = await zip.generateAsync({ type: 'blob' });
-    //     saveAs(content, 'uploaded-files.zip');
-    //     setIsMergeActive(true)
-    // };
-
-
     const handleDownloadZip = async () => {
         if (!files || files.length === 0) {
             console.error("No files to download");
             return;
         }
-
-        console.log(files);
         const zip = new JSZip();
 
         for (const fileObj of files) {
@@ -436,40 +348,48 @@ function DragAndDrop() {
         if (!isFileAllowed(files)) {
             return;
         }
+
         const formData = new FormData();
-        // formData.append('files', files);
-        formData.append('name', convertToUnderscore(employee?.name));
-        formData.append('department', convertToUnderscore(employee?.department));
-        files?.forEach((file, index) => {
-            formData.append('files', file);
+        formData.append("name", convertToUnderscore(employee?.name));
+        formData.append("department", convertToUnderscore(employee?.department));
+
+        files?.forEach((fileObj, index) => {
+            if (fileObj.renamedFile) {
+                formData.append("files", fileObj.renamedFile);
+            } else {
+                console.error(`File at index ${index} is missing 'renamedFile' property`);
+            }
         });
+
         try {
             Swal.fire({
-                title: 'loading...',
+                title: "loading...",
                 allowEscapeKey: false,
                 allowOutsideClick: false,
                 didOpen: () => {
                     Swal.showLoading();
-                }
+                },
             });
-            const response = await mergeFilesApi(formData)
+
+            const response = await mergeFilesApi(formData);
+
             if (response?.status === 200) {
-                Swal.close()
-                toast.success("Successfully merged files")
-                setFileUrl(response?.data?.file_url)
-                const size = await getFileSize(response?.data?.file_url)
+                Swal.close();
+                toast.success("Successfully merged files");
+                setFileUrl(response?.data?.file_url);
+
+                const size = await getFileSize(response?.data?.file_url);
                 if (size) {
-                    // const convertedSize = formatFileSize(size)
-                    setSizeOfFile(Number(size))
+                    setSizeOfFile(Number(size));
                 }
             }
         } catch (error) {
-            Swal.close()
-            console.log(error?.message)
+            Swal.close();
+            console.log(error?.message);
         } finally {
-            Swal.close()
+            Swal.close();
         }
-    }
+    };
 
     const compressFileHandler = async (fileUrl) => {
         try {
@@ -504,8 +424,6 @@ function DragAndDrop() {
 
     }
 
-
-
     const sideViewSetHandler = async (e, file) => {
         const box = e.currentTarget;
         const boxRect = box.getBoundingClientRect();
@@ -513,7 +431,6 @@ function DragAndDrop() {
         const isCloserToRight = boxRect.right > screenWidth / 2;
 
         setIsRight(isCloserToRight)
-        console.log(file)
         // const preview = await generatePreview(file);
         setPreviewData({ name: file.name, type: file.type, preview: file?.preview })
     }
@@ -622,8 +539,6 @@ function DragAndDrop() {
                                                 selectedName={selectedName}
                                                 typeData={typeData}
                                                 previewData={previewData}
-                                                isOpen={isOpen}
-                                                setIsOpen={(value) => setIsOpen(prev => prev === value ? -1 : value)}
                                             />
                                         ))}
                                     </div>
@@ -674,7 +589,7 @@ function DragAndDrop() {
                         <p className='text-sm text-gray-600 sm:text-base'>The file size is <span className={formatFileSizeNumber(sizeOfFile) < 10 ? 'font-semibold text-green-700' : 'text-orange-700 font-semibold'}>{formatFileSize(sizeOfFile)}</span>  size. Do you want to compress?</p>
                     </div>
                     <div className="flex flex-col items-center justify-center w-full px-5 mt-10 gap-7 md:gap-10 md:flex-row lg:px-40 xl:px-60">
-                        <GlobalButton type="button" disabled={formatFileSizeNumber(sizeOfFile) < 10 || loading ? true : false} Text="Yes, I want to compress" onClick={() => compressFileHandler(fileUrl)} />
+                        <GlobalButton type="button" Text="Yes, I want to compress" disabled={formatFileSizeNumber(sizeOfFile) < 10 || loading ? true : false} onClick={() => compressFileHandler(fileUrl)} />
                         <GlobalButton type="button" Text="No, download this version" onClick={() => handleDownload(fileUrl)} disabled={loading} />
                     </div>
                     {formatFileSizeNumber(sizeOfFile) < 10 && <p className='text-xs text-green-600 '>{`You can only compress the file if the size is more than 10 Mb`}</p>}
